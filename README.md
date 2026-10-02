@@ -4,7 +4,7 @@ Tabellone segnapunti per il judo, pensato per essere usato da telefono o tablet 
 
 Creato da **Yanagi Academy**.
 
-🔗 **Sito pubblico:** https://leisbbmcrew.github.io/Janagi-Academy-Score/
+🔗 **Sito pubblico:** https://leisbbmcrew.github.io/Janagi-Academy-Scoreboard/
 
 ## Funzionalità principali
 
