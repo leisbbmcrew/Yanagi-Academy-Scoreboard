@@ -1,0 +1,77 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#15171c"><title>Gare - Yanagi Academy</title>
+<style>
+:root{--bg:#15171c;--c:#22252d;--bd:#3a3e49;--tx:#f2f2f2;--mu:#9aa0ad;--ok:#00e060;--bl:#2f6fe0}
+*{box-sizing:border-box}body{margin:0 auto;max-width:720px;padding:10px;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif}
+h1{font-size:20px;margin:4px 0 12px}
+button,input,select,textarea{font:inherit;color:inherit;background:var(--c);border:1px solid var(--bd);border-radius:8px;padding:9px 11px}
+button{cursor:pointer}button.p{background:var(--bl);border-color:var(--bl);font-weight:700}
+.card{background:var(--c);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:8px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.g{flex:1;min-width:0}
+.m{display:flex;gap:6px;margin:6px 0}.m button{flex:1;text-align:left;background:var(--bg)}
+.m button.w{background:#0a7d2c;border-color:var(--ok);font-weight:700}.m button.l{opacity:.5}
+small,.mu{color:var(--mu)}
+table{width:100%;border-collapse:collapse}td,th{padding:7px 4px;border-bottom:1px solid var(--bd);text-align:center}td:nth-child(2),th:nth-child(2){text-align:left}
+.tabs button.on{border-color:var(--ok);color:var(--ok)}
+textarea{width:100%;min-height:150px}
+#st{position:fixed;top:6px;right:8px;font-size:12px;color:var(--mu)}
+</style></head><body><div id="st">Solo locale (v2)</div><div id="app"></div><input type="file" id="fi" accept=".json" hidden>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let D;try{D=JSON.parse(localStorage.getItem('jdraw'))}catch(e){}D=D||{cats:[]};
+let cur=null,tab='m',open=null;
+const save=all=>{try{localStorage.setItem('jdraw',JSON.stringify(D))}catch(e){}if(window.SY)(all?D.cats:[cat()]).filter(Boolean).forEach(window.SY.push)},cat=()=>D.cats.find(c=>c.id==cur);
+// girone all'italiana, metodo del cerchio: restituisce coppie di indici atleta
+function rr(n){const a=[...Array(n).keys()],out=[];if(n%2)a.push(-1);const m=a.length;
+  for(let r=0;r<m-1;r++){for(let i=0;i<m/2;i++){const x=a[i],y=a[m-1-i];if(x>=0&&y>=0)out.push(r%2&&i==0?[y,x]:[x,y])}a.splice(1,0,a.pop())}return out}
+const gen=c=>{c.matches=rr(c.atleti.length).map(([a,b],i)=>({id:c.id+'-'+(i+1),n:i+1,a,b,w:null,why:'',t:'',pa:'',pb:''}))};
+const WHY=['','Ippon','Waza-ari','Yuko','Koka','Shido','Hantei','Hansoku-make','Forfait'];
+function H(){return '<h1>Gare - Yanagi Academy</h1>'+(D.cats.map(c=>{const d=c.matches.filter(m=>m.w!==null).length;
+  return `<div class="card row"><div class="g"><b>${esc(c.nome)}</b><br><small>Girone all'italiana, ${c.atleti.length} atleti, tatami ${esc(c.tatami)}, incontri ${d}/${c.matches.length}</small></div><button class="p" data-a="op" data-id="${c.id}">Apri</button></div>`}).join('')||'<p class="mu">Nessuna categoria. Creane una per iniziare.</p>')+
+  '<div class="row"><button class="p" data-a="nc">Nuova categoria</button><button data-a="ex">Esporta dati</button><button data-a="im">Importa dati</button></div>'}
+function V(c){const nm=i=>esc(c.atleti[i]);
+  let h=`<div class="row"><button data-a="bk">Indietro</button><b class="g">${esc(c.nome)}</b><small>Tatami</small><input data-f="tatami" type="number" min="1" value="${esc(c.tatami)}" style="width:66px"></div>
+  <div class="row tabs" style="margin:10px 0">${[['m','Incontri'],['s','Classifica'],['a','Atleti']].map(([k,l])=>`<button class="g ${tab==k?'on':''}" data-a="tb" data-k="${k}">${l}</button>`).join('')}</div>`;
+  if(tab=='m')h+=c.matches.length?c.matches.map((m,i)=>`<div class="card"><small>Incontro ${m.n}, codice ${m.id}</small><div class="m">${[m.a,m.b].map((x,k)=>`<button class="${m.w===k?'w':m.w===1-k?'l':''}" data-a="win" data-i="${i}" data-k="${k}">${nm(x)}</button>`).join('')}</div>
+    <div class="row"><button data-a="dt" data-i="${i}">Dettagli</button><small>${m.w!==null?esc([m.why,m.t].filter(Boolean).join(', ')):'Tocca il vincitore'}</small></div>
+    ${open===i?`<div class="row" style="margin-top:8px"><select data-f="why" data-i="${i}">${WHY.map(w=>`<option ${w==m.why?'selected':''}>${w}</option>`).join('')}</select><input data-f="t" data-i="${i}" placeholder="Tempo 2:31" value="${esc(m.t)}" style="width:110px"><input data-f="pa" data-i="${i}" placeholder="Punti 1" value="${esc(m.pa)}" style="width:80px"><input data-f="pb" data-i="${i}" placeholder="Punti 2" value="${esc(m.pb)}" style="width:80px"></div>`:''}</div>`).join(''):'<p class="mu">Inserisci almeno 2 atleti nella scheda Atleti.</p>';
+  if(tab=='s'){const st=c.atleti.map((n,i)=>{let v=0,s=0,ip=0;c.matches.forEach(m=>{if(m.w===null||(m.a!=i&&m.b!=i))return;(m.w===0?m.a:m.b)==i?(v++,m.why=='Ippon'&&ip++):s++});return{n,v,s,ip}}).sort((x,y)=>y.v-x.v||x.s-y.s||y.ip-x.ip);
+    h+='<table><tr><th>#</th><th>Atleta</th><th>V</th><th>S</th><th>Ippon</th></tr>'+st.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.n)}</td><td>${x.v}</td><td>${x.s}</td><td>${x.ip}</td></tr>`).join('')+'</table><p><small>Ordine: vittorie, poche sconfitte, ippon. Gli scontri diretti a pari merito vanno valutati a mano.</small></p>'}
+  if(tab=='a')h+=`<p class="mu">Un atleta per riga.</p><textarea id="at" placeholder="Rossi Mario&#10;Bianchi Luca">${esc(c.atleti.join('\n'))}</textarea><p><button class="p" data-a="sa">Salva atleti e crea incontri</button></p>`;
+  return h}
+function R(){const c=cur&&cat();$('#app').innerHTML=c?V(c):H()}
+const A={
+ nc(){const nome=(prompt('Nome categoria (es. Maschi Seniores -66 kg, cinture blu-marroni-nere)')||'').trim();if(!nome)return;const t=prompt('Numero tatami','1')||'1';
+  const c={id:'c'+Date.now().toString(36),nome,fmt:'girone',tatami:t,atleti:[],matches:[]};D.cats.push(c);save(1);cur=c.id;tab='a';R()},
+ op(d){cur=d.id;tab='m';open=null;R()},bk(){cur=null;R()},tb(d){tab=d.k;open=null;R()},
+ win(d){const m=cat().matches[+d.i],k=+d.k;m.w=m.w===k?null:k;save();R()},
+ dt(d){open=open===+d.i?null:+d.i;R()},
+ sa(){const c=cat(),l=$('#at').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  if(c.matches.some(m=>m.w!==null)&&!confirm('Gli incontri già giocati verranno cancellati. Continuare?'))return;
+  c.atleti=l;gen(c);save();tab='m';R()},
+ ex(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(D)],{type:'application/json'}));a.download='gare.json';a.click()},
+ im(){$('#fi').click()}};
+document.onclick=e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a])A[t.dataset.a](t.dataset)};
+document.onchange=e=>{const t=e.target,f=t.dataset&&t.dataset.f;if(!f)return;const c=cat();if(t.dataset.i!=null)c.matches[+t.dataset.i][f]=t.value;else c[f]=t.value;save()};
+$('#fi').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(x=>{try{const j=JSON.parse(x);if(!Array.isArray(j.cats))throw 0;D=j;save(1);cur=null;R()}catch(err){alert('File non valido')}})};
+R();
+</script><script type="module" onerror="document.getElementById('st').textContent='Errore: Firebase non caricato'">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getAuth,signInAnonymously}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import{initializeFirestore,persistentLocalCache,doc,setDoc,collection,onSnapshot}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const app=initializeApp({apiKey:"AIzaSyDArN1Jq6w8vogT9iGDLGQg2Sl6iwGaUHs",authDomain:"draw-684d9.firebaseapp.com",projectId:"draw-684d9",storageBucket:"draw-684d9.firebasestorage.app",messagingSenderId:"918194057651",appId:"1:918194057651:web:5ee4cbf91658ecfaaa1bc6"});
+const st=t=>$('#st').textContent=t;st('Connessione…');
+signInAnonymously(getAuth(app)).catch(()=>{});
+const db=initializeFirestore(app,{localCache:persistentLocalCache()}),col=collection(db,'cats');
+const push=c=>setDoc(doc(db,'cats',c.id),JSON.parse(JSON.stringify(c))).catch(e=>st('Errore: '+(e.code||e.message)));
+let first=true;
+onSnapshot(col,snap=>{
+  snap.docChanges().forEach(ch=>{if(ch.doc.metadata.hasPendingWrites)return;const c=ch.doc.data(),i=D.cats.findIndex(x=>x.id==c.id);
+    if(ch.type=='removed'){if(i>=0)D.cats.splice(i,1)}else if(i>=0)D.cats[i]=c;else D.cats.push(c)});
+  if(first){first=false;const ids=new Set(snap.docs.map(d=>d.id));D.cats.filter(c=>!ids.has(c.id)).forEach(push)}
+  try{localStorage.setItem('jdraw',JSON.stringify(D))}catch(e){}
+  const a=document.activeElement;if(!a||!/INPUT|TEXTAREA|SELECT/.test(a.tagName))R();
+  st(snap.metadata.fromCache?'Offline, in coda':'Sincronizzato')
+},e=>st('Errore: '+(e.code||e.message)));
+window.SY={push};
+</script>
+</body></html>
