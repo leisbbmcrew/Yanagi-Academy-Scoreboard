@@ -1,0 +1,317 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#15171c"><title>Gare - Yanagi Academy</title>
+<style>
+:root{--bg:#15171c;--c:#22252d;--bd:#3a3e49;--tx:#f2f2f2;--mu:#9aa0ad;--ok:#00e060;--bl:#2f6fe0;--p0:#f4f4f4;--t0:#111;--p1:#0a3fa0;--t1:#fff}
+*{box-sizing:border-box}body{margin:0 auto;max-width:720px;padding:10px;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif}
+h1{font-size:20px;margin:4px 0 12px}
+button,input,select,textarea{font:inherit;color:inherit;background:var(--c);border:1px solid var(--bd);border-radius:8px;padding:9px 11px}
+button{cursor:pointer}button.p{background:var(--bl);border-color:var(--bl);font-weight:700}
+.card{background:var(--c);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:8px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.g{flex:1;min-width:0}
+.m{display:flex;gap:6px;margin:6px 0}.m button{flex:1;text-align:left;background:var(--bg)}
+.m button.w{background:#0a7d2c;border-color:var(--ok);font-weight:700}.m button.l{opacity:.5}
+small,.mu{color:var(--mu)}
+table{width:100%;border-collapse:collapse}td,th{padding:7px 4px;border-bottom:1px solid var(--bd);text-align:center}td:nth-child(2),th:nth-child(2){text-align:left}
+.tabs button.on{border-color:var(--ok);color:var(--ok)}
+textarea{width:100%;min-height:150px}
+body.wide{max-width:none}.gw{overflow:auto;padding:6px 2px;margin:0 -4px}.gt{width:max-content;margin-bottom:14px}
+.bt{display:flex;align-items:center}.bn{position:relative}.bk{display:flex;flex-direction:column;justify-content:center}
+.bk>.bn{padding:3px 14px 3px 0;display:flex;justify-content:flex-end}.bk>.bn::after{content:'';position:absolute;right:0;top:50%;width:14px;border-top:1px solid var(--bd)}
+.bk>.bn::before{content:'';position:absolute;right:0;border-right:1px solid var(--bd)}.bk>.bn:first-child::before{top:50%;bottom:0}.bk>.bn:last-child::before{top:0;bottom:50%}
+.bk+.bm{margin-left:14px}.bk+.bm::before{content:'';position:absolute;left:-14px;top:50%;width:14px;border-top:1px solid var(--bd)}
+.bm{position:relative;width:158px;background:var(--c);border:1px solid var(--bd);border-radius:6px;font-size:12px;overflow:hidden}.lf{width:158px}
+.bm small{display:block;padding:1px 6px;font-size:10px;background:#0004}.bl{display:flex;gap:6px;align-items:center;padding:3px 6px}.bl+.bl{border-top:1px solid var(--bd)}
+.bl i{font-style:normal;color:var(--mu);min-width:24px;text-align:right;font-size:11px}.bl span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bl.w{background:#0a7d2c66;font-weight:700}.bl.l{opacity:.45}.bl.e span{color:var(--mu);font-style:italic}
+#st{position:fixed;top:6px;right:8px;font-size:12px;color:var(--mu)}
+</style></head><body><div id="st">Solo locale (v10)</div><div id="app"></div><input type="file" id="fi" accept=".json" hidden>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// codice evento: separa dati locali e percorsi Firestore di eventi diversi (stesso codice sui tabelloni)
+const EV=(localStorage.getItem('jev')||'').toUpperCase().replace(/[^A-Z0-9_-]/g,''),SK='jdraw'+(EV?'_'+EV:'');
+if(EV&&localStorage.getItem(SK)==null&&localStorage.getItem('jdraw')!=null){localStorage.setItem(SK,localStorage.getItem('jdraw'));localStorage.removeItem('jdraw')}
+let D;try{D=JSON.parse(localStorage.getItem(SK))}catch(e){}D=D||{cats:[]};
+let cur=null,tab='m',open=null,tt=null,ly=null,pz=null,md=null;
+const THEMES={wb:{p0:'#f4f4f4',t0:'#111',p1:'#0a3fa0',t1:'#fff',n0:'Bianco',n1:'Blu'},wr:{p0:'#f4f4f4',t0:'#111',p1:'#c62828',t1:'#fff',n0:'Bianco',n1:'Rosso'}};
+function applyLy(){const m=D.layout||'wb';let t=THEMES[m];if(m=='custom')t={p0:D.c0||'#f4f4f4',t0:D.t0||'#111',p1:D.c1||'#0a3fa0',t1:D.t1||'#fff',n0:D.n0||'Atleta 1',n1:D.n1||'Atleta 2'};if(!t)t=THEMES.wb;const r=document.documentElement;[['--p0',t.p0],['--t0',t.t0],['--p1',t.p1],['--t1',t.t1]].forEach(([k,v])=>r.style.setProperty(k,v));return t}
+const save=all=>{try{localStorage.setItem(SK,JSON.stringify(D))}catch(e){}if(window.SY)(all&&all.id?[all]:all?D.cats:[cat()]).filter(Boolean).forEach(window.SY.push)},cat=()=>D.cats.find(c=>c.id==cur);
+const sp=S=>{let p=[0];while(p.length<S){const n=p.length*2;p=p.flatMap(x=>[x,n-1-x])}return p};
+// IJF: 4 pool, 4 semifinalisti; i perdenti dei pool si sfidano A-B e C-D e il vincitore va al bronzo contro un perdente di semifinale. Restituisce incontri pronti e classifica
+// sorteggio con teste di serie (ranking, 1 = migliore): TS1 pool A, TS2 pool D, TS3-4 a sorte in B/C, TS5-8 a sorte nella posizione di meta' pool; bye vicino alle teste di serie
+function draw(c){const n=c.atleti.length,S=Math.max(8,2**Math.ceil(Math.log2(n))),Q=S/4,rk=c.rk||[],
+ sh=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a},
+ seeds=c.atleti.map((_,i)=>i).filter(i=>rk[i]!=null).sort((a,b)=>rk[a]-rk[b]).slice(0,8),sl=Array(S).fill(undefined),
+ heads=[0,3,...sh([1,2])],ord=sh([0,1,2,3]);let need=S-n;
+ const bye=k=>{if(need>0&&sl[k]===undefined){sl[k]=-1;need--}};
+ seeds.slice(0,4).forEach((a,k)=>sl[heads[k]*Q]=a);
+ const s2=Q>=4?seeds.slice(4):[];s2.forEach((a,k)=>sl[ord[k]*Q+Q/2]=a);
+ seeds.slice(0,4).forEach((a,k)=>bye(heads[k]*Q+1));s2.forEach((a,k)=>bye(ord[k]*Q+Q/2+1));
+ sh([...Array(S/2).keys()]).forEach(k=>{if(need>0&&sl[2*k]===undefined&&sl[2*k+1]===undefined){sl[2*k+1]=-1;need--}});
+ const used=new Set([...seeds.slice(0,4),...s2]),rest=sh(c.atleti.map((_,i)=>i).filter(i=>!used.has(i)));
+ for(let k=0;k<S;k++)if(sl[k]===undefined)sl[k]=rest.length?rest.shift():-1;
+ c.slots=sl;c.seeds=[...seeds.slice(0,4),...s2]}
+// girone all'italiana (2-5 atleti, tutti contro tutti). Pari: vittorie, punti fatti, scontro diretto (tra i pari), minor tempo totale
+function rr(n){const a=[...Array(n).keys()],out=[];if(n%2)a.push(-1);const m=a.length;
+ for(let r=0;r<m-1;r++){for(let i=0;i<m/2;i++){const x=a[i],y=a[m-1-i];if(x>=0&&y>=0)out.push(r%2&&i==0?[y,x]:[x,y])}a.splice(1,0,a.pop())}return out}
+function gir(c){const R=c.res||{},P=[],pr=c.pairs||[];for(let k=0;k<pr.length;k+=2)P.push([pr[k],pr[k+1]]);
+ const st=c.atleti.map((_,i)=>({i,v:0,pt:0,t:0,h:{}})),sec=x=>{const m=String(x||'').match(/^(\d+):(\d{1,2})$/);return m?+m[1]*60+ +m[2]:parseInt(x)||0};
+ P.forEach(([a,b],k)=>{const r=R['g'+k];if(!r||r.w==null)return;const w=r.w==0?a:b,l=r.w==0?b:a;
+  st[w].v++;st[w].h[l]=1;st[a].pt+=parseInt(r.pa)||0;st[b].pt+=parseInt(r.pb)||0;st[a].t+=sec(r.t);st[b].t+=sec(r.t)});
+ const o=[...st].sort((x,y)=>y.v-x.v||y.pt-x.pt),out=[];
+ for(let i=0;i<o.length;){let j=i+1;while(j<o.length&&o[j].v==o[i].v&&o[j].pt==o[i].pt)j++;
+  const G=o.slice(i,j),ids=G.map(g=>g.i);G.forEach(g=>g.hw=ids.filter(d=>g.h[d]).length);G.sort((x,y)=>y.hw-x.hw||x.t-y.t);out.push(...G);i=j}
+ const ft=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
+ return{ms:P.map(([a,b],k)=>({id:'g'+k,lab:'Incontro '+(k+1),a,b})),rk:out.map((g,k)=>[(k+1)+'°',g.i,[g.v,g.pt,ft(g.t)]])}}
+// scontro diretto con doppio recupero: 2 pool (A dispari, B pari), numeri a cascata (bit-reversal), recuperi dai 4 semifinalisti
+function drd(c){const n=c.atleti.length,K=Math.max(4,2**Math.ceil(Math.log2(Math.ceil(n/2)))),L=Math.log2(K),rk=c.rk||[],
+ sh=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a},
+ ix=c.atleti.map((_,i)=>i),sd=ix.filter(i=>rk[i]!=null).sort((a,b)=>rk[a]-rk[b]),ord=[...sd,...sh(ix.filter(i=>rk[i]==null))],
+ br=i=>{let r=0;for(let b=0;b<L;b++)r=r<<1|(i>>b&1);return r},sl=[];
+ c.num=[];ord.forEach((a,k)=>c.num[a]=k+1);
+ for(let P=0;P<2;P++)for(let i=0;i<K;i++){const num=2*(br(i)+1)-(P==0?1:0);sl.push(num<=n?ord[num-1]:-1)}
+ c.slots=sl;c.seeds=sd.slice(0,8)}
+function brk(c){if(!c.slots||c.slots.length<8)return{ms:[],rk:[],all:[]};const R=c.res||{},wd=new Set(c.wd||[]),K=c.slots.length/2,L=Math.log2(K),D={},O=[],H=[[[],[]],[[],[]]],sem=[],
+ NM=['Semifinale','Quarti','Ottavi','Sedicesimi'],def=(id,lab,a,b)=>{D[id]={id,lab,a,b};O.push(id)};
+ const ev=id=>{let a=D[id].a(),b=D[id].b();const r=R[id];if(!(r&&r.w!=null)){if(wd.has(a))a=-1;if(wd.has(b))b=-1}return[a,b]};
+ const win=id=>{const[a,b]=ev(id);if(a==-1)return b;if(b==-1)return a;if(a==null||b==null)return null;const w=(R[id]||{}).w;return w==null?null:w==0?a:b};
+ const los=id=>{const[a,b]=ev(id);if(a==-1||b==-1)return-1;if(a==null||b==null)return null;const w=(R[id]||{}).w;return w==null?null:w==0?b:a};
+ const fin=[];
+ for(let P=0;P<2;P++){const pn='Pool '+'AB'[P],hw=[];
+  for(let h=0;h<2;h++){let it=c.slots.slice(P*K+h*K/2,P*K+(h+1)*K/2).map(x=>()=>x),r=1;
+   while(it.length>1){const nx=[],ids=[];for(let i=0;i<it.length;i+=2){const id='ab'[P]+h+r+(i/2),x=it[i],y=it[i+1];def(id,pn+', '+NM[L-r],x,y);ids.push(id);nx.push(()=>win(id))}H[P][h][r]=ids;it=nx;r++}
+   hw.push(it[0])}
+  const id='ab'[P]+'F';def(id,pn+', '+NM[0],hw[0],hw[1]);fin.push(id);sem[P]=hw}
+ // semifinalisti: S1 = A alto, S2 = B alto, S3 = A basso, S4 = B basso
+ const S=[sem[0][0],sem[1][0],sem[0][1],sem[1][1]],PH=[[0,0],[1,0],[0,1],[1,1]];
+ const vic=(k,d)=>{const r=L-d;if(r<1||r>L-1)return-1;const s=S[k]();if(s==null)return null;
+  for(const id of H[PH[k][0]][PH[k][1]][r]){const[a,b]=ev(id);if(a>=0&&b>=0&&win(id)==s)return s==a?b:a}return-1};
+ const q=[[1,5],[3,7],[2,6],[4,8]];
+ // turno 1: R1-R5, R3-R7, R2-R6, R4-R8 (sedicesimi contro ottavi); il vincitore prende il numero piu' basso
+ q.forEach(([lo,hi])=>def('p1'+lo,'Recupero, turno 1',()=>vic(lo-1,3),()=>vic(hi-5,2)));
+ // turno 2: entrano i ripescati dei quarti
+ q.forEach(([lo,hi])=>def('p2'+lo,'Recupero, turno 2',()=>win('p1'+lo),()=>vic(hi-5,1)));
+ def('p31','Recupero, turno 3',()=>win('p21'),()=>win('p23'));def('p32','Recupero, turno 3',()=>win('p22'),()=>win('p24'));
+ // ultimo turno: entrano i perdenti delle semifinali (pool B in R3, pool A in R4) e si assegnano i due 3° posti
+ def('p41','3° posto (griglia 1)',()=>win('p31'),()=>los(fin[1]));def('p42','3° posto (griglia 2)',()=>win('p32'),()=>los(fin[0]));
+ def('f','Finale',()=>win(fin[0]),()=>win(fin[1]));
+ return{all:O.map(id=>{const[a,b]=ev(id);return{id,a,b,w:win(id)}}),ms:O.map(id=>{const[a,b]=ev(id);return{id,lab:D[id].lab,a:D[id].a(),b:D[id].b(),ok:a!=null&&b!=null&&a>=0&&b>=0}}).filter(m=>m.ok&&m.a!=null&&m.b!=null&&m.a>=0&&m.b>=0),
+  rk:(()=>{const r=[['1°',win('f')],['2°',los('f')],['3°',win('p41')],['3°',win('p42')],['5°',los('p41')],['5°',los('p42')],['7°',los('p31')],['7°',los('p32')],...['p21','p22','p23','p24'].map(id=>['9°',los(id)]),...['p11','p12','p13','p14'].map(id=>['13°',los(id)])].filter(x=>x[1]!=null&&x[1]>=0);
+  if(win('f')!=null){const u=new Set(r.map(x=>x[1])),left=c.atleti.map((_,i)=>i).filter(i=>!u.has(i)&&!wd.has(i)),p=r.length+1;left.forEach(i=>r.push([p+'°',i]))}return r})()}}
+// secondo incontro garantito: a gara finita chi ha fatto un solo incontro ne gioca un altro contro uno nella stessa situazione (non fa classifica)
+function ex(c,b){const R=c.res||{},wd=new Set(c.wd||[]),dn=m=>R[m.id]&&R[m.id].w!=null;
+ if(!b.ms.length||!b.ms.every(dn)||(c.fmt!='g'&&!(b.rk[0]&&b.rk[0][0]=='1°')))return b;
+ const cnt={},opp={};b.ms.forEach(m=>{[m.a,m.b].forEach((x,k)=>{cnt[x]=(cnt[x]||0)+1;(opp[x]=opp[x]||new Set()).add(k?m.a:m.b)})});
+ const el=Object.keys(cnt).map(Number).filter(a=>cnt[a]==1&&!wd.has(a)).sort((x,y)=>x-y),used=new Set(),out=[];
+ el.forEach(a=>{if(used.has(a))return;const o=el.find(z=>z!=a&&!used.has(z)&&!opp[a].has(z))??el.find(z=>z!=a&&!used.has(z));
+  if(o==null)return;used.add(a);used.add(o);out.push({id:'x'+a+'_'+o,lab:'Secondo incontro (non fa classifica)',a,b:o})});
+ const lone=el.find(a=>!used.has(a));
+ return{...b,ms:[...b.ms,...out],note:lone!=null?c.atleti[lone]+' non ha un avversario per il secondo incontro (numero dispari).':''}}
+// classifica sempre completa: ordinata per posto, poi chi e' ancora in gara ('—') o ritirato
+function fullRk(c,b){const wd=new Set(c.wd||[]),rk=[...b.rk].sort((x,y)=>(parseInt(x[0])||999)-(parseInt(y[0])||999)),u=new Set(rk.map(x=>x[1]));c.atleti.forEach((_,i)=>{if(!u.has(i))rk.push([wd.has(i)?'rit.':'—',i])});return{...b,rk}}
+function bk(c){let b=bk0(c);if(c.sx)b=ex(c,b);if(c.fmt!='g')b=fullRk(c,b);return b}
+function bk0(c){if(c.fmt=='g')return gir(c);if(c.fmt=='dr')return brk(c);const ED=c.fmt=='ed',n=c.atleti.length,R=c.res||{},S=Math.max(8,2**Math.ceil(Math.log2(n))),Q=S/4,sl=c.slots&&c.slots.length==S?c.slots:sp(S).map(x=>x<n?x:-1),D={},O=[],QM=[],QW=[],RM={};
+ const def=(id,lab,a,b)=>{D[id]={id,lab,a,b};O.push(id)},ab=id=>[D[id].a(),D[id].b()];
+ const win=id=>{const[a,b]=ab(id);if(a==-1)return b;if(b==-1)return a;if(a==null||b==null)return null;const w=(R[id]||{}).w;return w==null?null:w==0?a:b};
+ const los=id=>{const[a,b]=ab(id);if(a==-1||b==-1)return-1;if(a==null||b==null)return null;const w=(R[id]||{}).w;return w==null?null:w==0?b:a};
+ for(let q=0;q<4;q++){let it=sl.slice(q*Q,q*Q+Q).map(x=>()=>x),r=1,ids=[];
+  while(it.length>1){const nx=[];for(let i=0;i<it.length;i+=2){const id='t'+q+r+(i/2),x=it[i],y=it[i+1];def(id,'Tabellone '+(q+1)+', turno '+r,x,y);ids.push(id);RM[id]=r;nx.push(()=>win(id))}it=nx;r++}
+  QM.push(ids);QW.push(it[0])}
+ const pl=q=>()=>los(QM[q][QM[q].length-1]);
+ if(!ED){def('rs1','Recupero A-B',pl(0),pl(1));def('rs2','Recupero C-D',pl(2),pl(3));}
+ def('sf1','Semifinale 1',QW[0],QW[1]);def('sf2','Semifinale 2',QW[2],QW[3]);
+ if(!ED){def('b1','Per il 3° posto (1)',()=>los('sf1'),()=>win('rs2'));def('b2','Per il 3° posto (2)',()=>los('sf2'),()=>win('rs1'))}
+ def('f','Finale',()=>win('sf1'),()=>win('sf2'));
+ return{all:O.map(id=>{const[a,b]=ab(id);return{id,a,b,w:win(id)}}),ms:O.map(id=>{const[a,b]=ab(id);return{id,lab:D[id].lab,a,b}}).filter(m=>m.a!=null&&m.b!=null&&m.a>=0&&m.b>=0),
+  rk:(()=>{const lr=Math.log2(Q),r=ED?[['1°',win('f')],['2°',los('f')],['3°',los('sf1')],['3°',los('sf2')]]:[['1°',win('f')],['2°',los('f')],['3°',win('b1')],['3°',win('b2')],['5°',los('b1')],['5°',los('b2')],['7°',los('rs1')],['7°',los('rs2')]];
+   Object.keys(RM).forEach(id=>{const rr=RM[id];if(ED||rr<lr)r.push([(4*2**(lr-rr)+1)+'°',los(id)])});return r.filter(x=>x[1]!=null&&x[1]>=0)})()}}
+const WHY=['','Ippon','Waza-ari','Yuko','Koka','Shido','Hantei','Hansoku-make','Forfait'];
+const E=()=>({w:null,why:'',t:'',pa:'',pb:''}),gm=(c,i)=>((c.res=c.res||{})[i]=c.res[i]||E()),
+ done=c=>Object.values(c.res||{}).filter(r=>r.w!=null).length,
+ gen=c=>{c.matches=[];c.res={};c.wd=[]},fix=c=>{if(!['ijf','ed','g','dr'].includes(c.fmt)){c.fmt='ijf';c.res={}}c.matches=[];return c};
+D.cats.forEach(fix);
+// tatami: prossimo incontro con riposo minimo per atleta (D.rest minuti, default 2), piu' categorie/pool in parallelo, chiusura rapida e premiazioni
+function pod(c){const b=bk(c),R=c.res||{};if(!b.ms.length||!b.ms.every(m=>R[m.id]&&R[m.id].w!=null))return null;
+ if(c.fmt=='g')return b.rk.slice(0,3);return b.rk[0]&&b.rk[0][0]=='1°'?b.rk.slice(0,4):null}
+const mmss=ms=>{const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+// risultato dal tabellone segnapunti: avvio incontro o fine con vincitore, motivo, tempo e punti (pesi in D.pt: ippon, waza-ari, yuko, koka)
+const PT=()=>D.pt||[10,7,5,1];
+function applyRes(d){const c=D.cats.find(x=>x.id==d.cid);if(!c)return false;const m=gm(c,d.id);
+ if(d.ev=='start'){if(m.w==null){m.st=d.u||Date.now();m.rm=false}}
+ else if(d.ev=='rm'){if(m.w==null){m.st=null;m.rm=true}}
+ else if(d.w===0||d.w===1){const W=PT(),pts=p=>{p=p||{};return p.ippon?W[0]:(p.wazaari||0)*W[1]+(p.yuko||0)*W[2]+(p.koka||0)*W[3]},y=d.why||'';
+  m.w=d.w;m.why=/ippon/i.test(y)?'Ippon':/hansoku/i.test(y)?'Hansoku-make':/hantei/i.test(y)?'Hantei':y;m.t=d.t||'';m.pa=String(pts(d.pa));m.pb=String(pts(d.pb));m.ts=d.u||Date.now();
+  if(d.inj===0||d.inj===1){m.why='Infortunio';m.inj=d.inj;if(d.inj===0)m.pa='0';else m.pb='0'; // l'infortunato resta fermo ai punti che ha in classifica
+   let ia=null;if(c.fmt=='g'){const k=+String(d.id).slice(1),pr=c.pairs||[];ia=pr[2*k+(d.inj?1:0)]}else{const x=(bk(c).all||[]).find(z=>z.id==d.id);if(x)ia=d.inj?x.b:x.a}
+   if(ia!=null&&ia>=0){const w=c.wd=c.wd||[];if(!w.includes(ia))w.push(ia);
+    if(c.fmt=='g'){const pr=c.pairs||[];for(let k=0;2*k<pr.length;k++){const r=gm(c,'g'+k);if(r.w==null&&(pr[2*k]==ia||pr[2*k+1]==ia)){r.w=pr[2*k]==ia?1:0;r.why='Ritiro';r.pa='0';r.pb='0';r.ts=Date.now()}}}}}}
+ else return true;
+ save(c);R();return true}
+const fzOk=c=>!!(D.fz||(D.fzt&&D.fzt[String(c.tatami)])||c.fz);
+function PLAN(){const now=Date.now(),REST=(D.rest||2)*60000,key=(c,i)=>(c.atleti[i]||'').trim().toLowerCase(),last={},busy=new Set(),out={};
+ D.cats.forEach(c=>{const r=c.res||{};bk(c).ms.forEach(m=>{const x=r[m.id]||{},k=[key(c,m.a),key(c,m.b)];
+  if(x.w!=null){if(x.ts)k.forEach(a=>a&&(last[a]=Math.max(last[a]||0,x.ts)))}else if(x.st)k.forEach(a=>a&&busy.add(a))})});
+ [...new Set(D.cats.map(c=>String(c.tatami)))].sort((a,b)=>a-b).forEach(t=>{const o=out[t]={run:[],el:[],wt:[],pz:[],rm:[]};
+  D.cats.filter(c=>String(c.tatami)==t&&!c.pr).forEach(c=>{const r=c.res||{},und=bk(c).ms.filter(m=>!(r[m.id]&&r[m.id].w!=null));if(pod(c))o.pz.push(c);
+   und.forEach((m,ix)=>{const x=r[m.id]||{};if(x.st){o.run.push({c,m});return}if(x.rm){o.rm.push({c,m});return}if(m.lab=='Finale'&&und.length>1)return;
+    const ka=key(c,m.a),kb=key(c,m.b),bz=(ka&&busy.has(ka))||(kb&&busy.has(kb)),
+     w=a=>a?Math.max(0,REST-(now-(last[a]||-1e15))):0,wa=w(ka),wb=w(kb),it={c,m,ix,rem:und.length,since:Math.max(last[ka]||0,last[kb]||0),wa,wb,bz,wait:bz?1e12:Math.max(wa,wb)};
+    (it.wait==0?o.el:o.wt).push(it)})});
+  o.el.sort((p,q)=>p.rem-q.rem||p.since-q.since||p.ix-q.ix);o.wt.sort((p,q)=>p.wait-q.wait);
+  const cs=D.cats.filter(c=>String(c.tatami)==t&&bk(c).ms.length);o.fin=cs.length>0&&cs.every(c=>c.pr||pod(c))});
+ return out}
+// pubblica per ogni tatami incontro in corso e prossimi: il tabellone segnapunti li legge e mostra i nomi
+let lastPub={};
+function pub(){if(!window.SY||!SY.pubDoc)return;Object.entries(PLAN()).forEach(([t,o])=>{const f=it=>({cid:it.c.id,id:it.m.id,cat:it.c.nome,lab:it.m.lab,a:it.c.atleti[it.m.a]||'',b:it.c.atleti[it.m.b]||''}),
+ d={run:o.run.map(f),post:o.rm.map(f),fin:!!o.fin,next:[...o.el.map(it=>({...f(it),rd:1})),...o.wt.slice(0,3).map(it=>({...f(it),rd:0,fz:fzOk(it.c)?1:0}))].slice(0,6)},j=JSON.stringify(d);
+ if(lastPub[t]!==j){lastPub[t]=j;SY.pubDoc(t,{...d,u:Date.now()})}});
+ const el=D.cats.map(c=>({id:c.id,nome:c.nome,tatami:String(c.tatami)})),ly=(()=>{const m=D.layout||'wb',o={layout:m};if(m=='custom')Object.assign(o,{c0:D.c0||'#f4f4f4',t0:D.t0||'#111111',c1:D.c1||'#0a3fa0',t1:D.t1||'#ffffff',n0:D.n0||'Atleta 1',n1:D.n1||'Atleta 2'});return o})(),je=JSON.stringify({cats:el,ly});if(lastPub.elenco!==je){lastPub.elenco=je;SY.pubDoc('elenco',{cats:el,ly,u:Date.now()})}}
+setInterval(pub,5000);
+function T(){let h=`<div class="row"><button data-a="bk">Indietro</button><b class="g">Tatami: prossimi incontri</b><button data-a="rt">Riposo ${D.rest||2} min</button><button data-a="pt">Punti ${PT().join('/')}</button></div>`;
+  {const ts=[...new Set(D.cats.map(c=>String(c.tatami)))].sort((a,b)=>a-b);h+=`<div class="card"><b>Forzare gli incontri in riposo</b><br><small class="mu">Se attivo, il tabellone può mandare in gara un incontro prima che gli atleti abbiano finito il riposo. Si imposta solo da qui. Vale per l'intera competizione, per un tatami o per una singola categoria (nella scheda della categoria).</small><p><button data-a="fzd" ${D.fz?'class="p"':''}>Intera competizione: ${D.fz?'sì':'no'}</button> ${ts.map(t=>`<button data-a="fzt" data-t="${esc(t)}" ${D.fzt&&D.fzt[t]?'class="p"':''}>Tatami ${esc(t)}: ${D.fzt&&D.fzt[t]?'sì':'no'}</button>`).join(' ')}</p></div>`}
+ Object.entries(PLAN()).forEach(([t,{run,el,wt,pz,rm}])=>{
+  const nm=(c,i)=>esc(c.atleti[i]),vs=it=>`<b>${nm(it.c,it.m.a)}</b> contro <b>${nm(it.c,it.m.b)}</b><br><small>${esc(it.c.nome)}, ${esc(it.m.lab)}</small>`;
+  h+=`<h2>Tatami ${esc(t)}</h2>`;
+  pz.forEach(c=>{h+=`<div class="card"><b>Premiazione pronta</b> ${esc(c.nome)}<br>${pod(c).map(x=>x[0]+' '+nm(c,x[1])).join(' · ')}<p><button class="p" data-a="pr" data-c="${c.id}">Premiazione fatta</button></p></div>`});
+  run.forEach(({c,m})=>{h+=`<div class="card"><small>In corso, ${esc(c.nome)}, ${esc(m.lab)}</small><div class="m">${[m.a,m.b].map((y,k)=>`<button data-a="win" data-c="${c.id}" data-i="${m.id}" data-k="${k}">${nm(c,y)}</button>`).join('')}</div><button data-a="go" data-c="${c.id}" data-i="${m.id}">Annulla avvio</button> <button data-a="rm" data-c="${c.id}" data-i="${m.id}">Rimanda</button></div>`});
+  rm.forEach(({c,m})=>{h+=`<div class="card"><small>Rimandato</small><p>${vs({c,m})}</p><button class="p" data-a="go" data-c="${c.id}" data-i="${m.id}">Richiama e manda in gara</button></div>`});
+  if(el[0]){const it=el[0];h+=`<div class="card"><small>${run.length?'Prossimo (dopo quello in corso)':'Prossimo incontro'}</small><p>${vs(it)}</p>${run.length?'':`<button class="p" data-a="go" data-c="${it.c.id}" data-i="${it.m.id}">Manda in gara</button>`}</div>`;
+   if(el.length>1)h+=`<p class="mu">Poi: ${el.slice(1,4).map(x=>nm(x.c,x.m.a)+' - '+nm(x.c,x.m.b)).join(' · ')}</p>`}
+  else if(!run.length&&!wt.length&&!pz.length)h+='<p class="mu">Nessun incontro pronto.</p>';
+  wt.slice(0,3).forEach(it=>{h+=`<div class="card"><small>In attesa di riposo</small><p>${vs(it)}</p><small>${it.bz?'un atleta è in gara':[[it.wa,it.m.a],[it.wb,it.m.b]].filter(z=>z[0]>0).map(z=>nm(it.c,z[1])+': ancora '+mmss(z[0])).join(', ')}</small>${it.bz||run.length||!fzOk(it.c)?'':`<br><button data-a="fgo" data-c="${it.c.id}" data-i="${it.m.id}">Forza in gara</button>`}</div>`})});
+ return h+(D.cats.length?'':'<p class="mu">Nessuna categoria.</p>')}
+function H(){return '<h1>Gare - Yanagi Academy</h1>'+(EV?'':'<div class="card" style="border-color:var(--ok)"><b>Codice evento non impostato</b><br><small>Imposta un codice per creare una stanza dedicata alla competizione. Poi inserisci lo stesso codice nei tabelloni.</small><p><button class="p" data-a="ev">Imposta codice evento</button></p></div>')+(D.cats.filter(c=>!c.pr&&!pod(c)).map(c=>{const d=done(c),tot=bk(c).ms.length;
+  return `<div class="card row"><div class="g"><b>${esc(c.nome)}</b><br><small>${({ed:'Eliminazione diretta',g:"Girone all'italiana",dr:'Doppio recupero'})[c.fmt]||'IJF'}${c.sx?', secondo incontro garantito':''}, ${c.atleti.length} atleti, tatami ${esc(c.tatami)}, incontri ${d}/${tot}</small></div><button class="p" data-a="op" data-id="${c.id}">Apri</button><button data-a="del" data-id="${c.id}">Elimina</button></div>`}).join('')||(EV?'<p class="mu">'+(D.cats.length?'Nessuna categoria in corso: le altre sono nelle Premiazioni.':'Nessuna categoria. Creane una per iniziare.')+'</p>':''))+
+  '<div class="row"><button class="p" data-a="nc">Nuova categoria</button><button data-a="pzv">Premiazioni ('+D.cats.filter(c=>!c.pr&&pod(c)).length+' da fare)</button><button data-a="mdv">Medagliere</button><button data-a="tm">Tatami</button><button data-a="ly">Layout colori</button><button data-a="ev">Evento: '+(EV||'imposta')+'</button><button data-a="ex">Esporta dati</button><button data-a="im">Importa dati</button></div>'}
+// griglia a schema: i nomi avanzano in base alle vittorie, i recuperi stanno sotto
+function GR(c){const b=bk(c),A={},n=c.atleti.length;(b.all||[]).forEach(x=>A[x.id]=x);
+ if(!(b.all||[]).length)return'<p class="mu">Inserisci gli atleti e fai il sorteggio per vedere la griglia.</p>';
+ const S0=Math.max(8,2**Math.ceil(Math.log2(n))),sl=c.fmt=='dr'?null:(c.slots&&c.slots.length==S0?c.slots:sp(S0).map(x=>x<n?x:-1)),
+  pn=i=>c.fmt=='dr'?c.num[i]:sl.indexOf(i)+1,nm=i=>esc(c.atleti[i]),
+  CAP={f:'Finale',aF:'Finale Pool A',bF:'Finale Pool B',sf1:'Semifinale 1',sf2:'Semifinale 2',p41:'3° posto',p42:'3° posto',b1:'3° posto',b2:'3° posto',rs1:'Recupero A-B',rs2:'Recupero C-D'},
+  line=(x,m,tag)=>{const e=x==null||x<0,cl=e?'e':m.w==null?'':m.w===x?'w':'l';return`<div class="bl ${cl}"><i>${tag||(e?'':pn(x))}</i><span>${x==null?'…':x<0?'bye':nm(x)}</span></div>`},
+  box=nd=>{const m=A[nd.id]||{},t=nd.tags||[];return`<div class="bm">${CAP[nd.id]?`<small>${CAP[nd.id]}</small>`:''}${line(m.a,m,t[0])}${line(m.b,m,t[1])}</div>`},
+  node=(nd,pm,ix)=>{if(nd.lf)return`<div class="bn"><div class="bm lf">${line(ix?pm.b:pm.a,{},nd.lf)}</div></div>`;
+   const k=nd.k||[],m=A[nd.id]||{};return`<div class="bn"><div class="bt">${k.length?`<div class="bk">${k.map((x,i)=>node(x,m,i)).join('')}</div>`:''}${box(nd)}</div></div>`};
+ let main,rec=[],leg='';
+ if(c.fmt=='dr'){const K=c.slots.length/2,L=Math.log2(K),hf=(P,h,r,i)=>({id:'ab'[P]+h+r+i,k:r>1?[hf(P,h,r-1,2*i),hf(P,h,r-1,2*i+1)]:[]}),pool=P=>({id:'ab'[P]+'F',k:[hf(P,0,L-1,0),hf(P,1,L-1,0)]}),
+   r1=(lo,hi)=>({id:'p1'+lo,tags:['R'+lo,'R'+hi]}),r2=(lo,hi)=>({id:'p2'+lo,k:[r1(lo,hi),{lf:'R'+(hi+4)}]}),
+   p31={id:'p31',k:[r2(1,5),r2(3,7)]},p32={id:'p32',k:[r2(2,6),r2(4,8)]};
+  main={id:'f',k:[pool(0),pool(1)]};rec=[{id:'p41',k:[p31,{lf:'Perd. SF'}]},{id:'p42',k:[p32,{lf:'Perd. SF'}]}];
+  leg='Numeri = numero di sorteggio (a cascata). R1–R8 = ripescati dai semifinalisti, R9–R12 = ripescati dai quarti. Perd. SF = perdente di semifinale.'}
+ else{const lr=Math.log2(S0/4),th=(q,r,i)=>({id:'t'+q+r+i,k:r>1?[th(q,r-1,2*i),th(q,r-1,2*i+1)]:[]});
+  main={id:'f',k:[{id:'sf1',k:[th(0,lr,0),th(1,lr,0)]},{id:'sf2',k:[th(2,lr,0),th(3,lr,0)]}]};
+  if(c.fmt!='ed'){rec=[{id:'b1',k:[{lf:'Perd. SF1'},{id:'rs2',tags:['Perd. C','Perd. D']}]},{id:'b2',k:[{lf:'Perd. SF2'},{id:'rs1',tags:['Perd. A','Perd. B']}]}];
+   leg='Numeri = posizione nel tabellone. Perd. = perdente del pool o della semifinale.'}else leg='Numeri = posizione nel tabellone.'}
+ return`<div class="gw"><div class="gt">${node(main)}</div></div>`+(rec.length?`<h3>Recuperi</h3><div class="gw">${rec.map(r=>`<div class="gt">${node(r)}</div>`).join('')}</div>`:'')+`<p class="mu">${leg}</p>`}
+function V(c){const nm=i=>esc(c.atleti[i]);if(tab=='g'&&c.fmt=='g')tab='m';
+  let h=`<div class="row"><button data-a="bk">Indietro</button><b class="g">${esc(c.nome)}</b><small>Tatami</small><input data-f="tatami" type="number" min="1" value="${esc(c.tatami)}" style="width:66px"></div>
+  <div class="row"><small>Formato</small><select data-f="fmt" style="flex:1">${[['ijf','IJF'],['ed','Eliminazione diretta'],['g',"Girone all'italiana (max 5 atleti)"],['dr','Scontro diretto con doppio recupero']].map(([k,l])=>`<option value="${k}" ${c.fmt==k?'selected':''}>${l}</option>`).join('')}</select></div>
+  <div class="row tabs" style="margin:10px 0">${[['m','Incontri'],...(c.fmt=='g'?[]:[['g','Griglia']]),['s','Classifica'],['a','Atleti']].map(([k,l])=>`<button class="g ${tab==k?'on':''}" data-a="tb" data-k="${k}">${l}</button>`).join('')}</div>`;
+  if(tab=='m'){const LM=bk(c).ms.map(x=>({...x,m:(c.res||{})[x.id]||E()}));
+   h+=LM.length?LM.map(x=>{const m=x.m;return `<div class="card"><small>${esc(x.lab)}</small><div class="m">${[x.a,x.b].map((y,k)=>`<button class="${m.w===k?'w':m.w===1-k?'l':''}" data-a="win" data-i="${x.id}" data-k="${k}">${nm(y)}</button>`).join('')}</div>
+    <div class="row"><button data-a="dt" data-i="${x.id}">Dettagli</button><small>${m.w!==null?esc([m.why,m.t].filter(Boolean).join(', ')):'Tocca il vincitore'}</small></div>
+    ${open==x.id?`<div class="row" style="margin-top:8px"><select data-f="why" data-i="${x.id}">${WHY.map(w=>`<option ${w==m.why?'selected':''}>${w}</option>`).join('')}</select><input data-f="t" data-i="${x.id}" placeholder="Tempo 2:31" value="${esc(m.t)}" style="width:110px"><input data-f="pa" data-i="${x.id}" placeholder="Punti 1" value="${esc(m.pa)}" style="width:80px"><input data-f="pb" data-i="${x.id}" placeholder="Punti 2" value="${esc(m.pb)}" style="width:80px"></div>${c.fmt=='dr'?`<div class="row" style="margin-top:8px">${[x.a,x.b].map(y=>`<button data-a="wd" data-k="${y}">Ritira ${nm(y)}</button>`).join('')}</div>`:''}`:''}</div>`}).join(''):'<p class="mu">Inserisci gli atleti nella scheda Atleti.</p>';h+=bk(c).note?`<p class="mu">${esc(bk(c).note)}</p>`:''}
+  if(tab=='g')h+=GR(c);
+  if(tab=='s'){const rk=bk(c).rk;h+=rk.length?'<table><tr><th>Pos.</th><th>Atleta</th>'+(rk[0]&&rk[0][2]?'<th>V</th><th>Pt</th><th>Tempo</th>':'')+'</tr>'+rk.map(x=>`<tr><td>${x[0]}</td><td>${nm(x[1])}${(c.soc||[])[x[1]]?'<br><small class="mu">'+esc(c.soc[x[1]])+'</small>':''}</td>${x[2]?'<td>'+x[2].join('</td><td>')+'</td>':''}</tr>`).join('')+'</table>':'<p class="mu">La classifica compare man mano che si giocano gli incontri.</p>'}
+  if(tab=='a'){const rk=c.rk||[],S=c.slots?c.slots.length:0,np=c.fmt=='dr'?2:4,Q=S/np,sd=c.seeds||[];
+   h+=`<p class="mu">${c.fmt=='g'?'Un atleta per riga, da 2 a 5 atleti: si incontrano tutti.':'Un atleta per riga. Ranking facoltativo dopo il punto e virgola, 1 = migliore (es. Rossi Mario ; 3). Associazione facoltativa come terzo campo (es. Rossi Mario ; 3 ; Judo Club Roma, oppure Rossi Mario ; ; Judo Club Roma): serve al medagliere. I primi 8 sono teste di serie.'}</p><p><button data-a="sx">Secondo incontro garantito: ${c.sx?'sì':'no'}</button> <button data-a="fzc">Forzare incontri in riposo: ${c.fz?'sì':'no'}</button><br><small class="mu">A gara finita, chi ha fatto un solo incontro ne gioca un altro contro uno nella stessa situazione. Non fa classifica.</small></p><textarea id="at" placeholder="Rossi Mario ; 1 ; Judo Club Roma&#10;Bianchi Luca ; 2 ; Yanagi Academy&#10;Verdi Paolo ; ; Judo Club Roma">${esc(c.atleti.map((a,i)=>a+((c.soc||[])[i]?' ; '+(rk[i]!=null?rk[i]:'')+' ; '+c.soc[i]:(rk[i]!=null?' ; '+rk[i]:''))).join('\n'))}</textarea><p><button class="p" data-a="sa">${c.fmt=='g'?'Salva atleti e crea incontri':'Salva atleti e fai il sorteggio'}</button></p>`;
+   if(S)h+='<h3>Sorteggio</h3>'+[...Array(np).keys()].map(q=>`<p><b>Pool ${'ABCD'[q]}</b><br>${c.slots.slice(q*Q,q*Q+Q).map(i=>i<0?'<span class="mu">bye</span>':(c.fmt=='dr'?c.num[i]+'. ':'')+nm(i)+(sd.includes(i)?' <b>(TS'+(sd.indexOf(i)+1)+')</b>':'')).join(' · ')}</p>`).join('')+'<p><button data-a="dr">Rifai il sorteggio</button></p>';
+   if((c.wd||[]).length)h+='<p>Ritirati: '+c.wd.map(k=>`<button data-a="wd" data-k="${k}">Reintegra ${nm(k)}</button>`).join(' ')+'</p>'}
+  return h}
+function LY(){const m=D.layout||'wb',t=applyLy();
+  return `<div class="row"><button data-a="bk">Indietro</button><b class="g">Layout colori</b></div>
+  <div class="card"><p><b>Schema colori atleti</b> (inviato ai tabelloni con lo stesso codice evento, se sono su «Segui Gare»)</p>
+  <label style="display:block;margin:8px 0"><input type="radio" name="lay" value="wb" ${m=='wb'?'checked':''} data-a="setly" data-k="wb"> Bianco – Blu</label>
+  <label style="display:block;margin:8px 0"><input type="radio" name="lay" value="wr" ${m=='wr'?'checked':''} data-a="setly" data-k="wr"> Bianco – Rosso</label>
+  <label style="display:block;margin:8px 0"><input type="radio" name="lay" value="custom" ${m=='custom'?'checked':''} data-a="setly" data-k="custom"> Custom</label>
+  ${m=='custom'?`<div style="margin-top:10px">
+  <div class="row"><small>Atleta 1 sfondo</small><input data-f="c0" type="color" value="${esc(D.c0||'#f4f4f4')}" style="width:50px;padding:2px"><input data-f="c0" value="${esc(D.c0||'#f4f4f4')}" style="width:100px"></div>
+  <div class="row"><small>Atleta 1 testo</small><input data-f="t0" type="color" value="${esc(D.t0||'#111111')}" style="width:50px;padding:2px"><input data-f="t0" value="${esc(D.t0||'#111111')}" style="width:100px"></div>
+  <div class="row"><small>Atleta 2 sfondo</small><input data-f="c1" type="color" value="${esc(D.c1||'#0a3fa0')}" style="width:50px;padding:2px"><input data-f="c1" value="${esc(D.c1||'#0a3fa0')}" style="width:100px"></div>
+  <div class="row"><small>Atleta 2 testo</small><input data-f="t1" type="color" value="${esc(D.t1||'#ffffff')}" style="width:50px;padding:2px"><input data-f="t1" value="${esc(D.t1||'#ffffff')}" style="width:100px"></div>
+  <div class="row"><small>Nome 1</small><input data-f="n0" value="${esc(D.n0||'Atleta 1')}" style="flex:1"></div>
+  <div class="row"><small>Nome 2</small><input data-f="n1" value="${esc(D.n1||'Atleta 2')}" style="flex:1"></div>
+  </div>`:''}
+  <div class="row" style="margin-top:12px"><div style="flex:1;padding:12px;border-radius:8px;text-align:center;background:var(--p0);color:var(--t0);font-weight:700">${esc(t.n0)}</div><div style="flex:1;padding:12px;border-radius:8px;text-align:center;background:var(--p1);color:var(--t1);font-weight:700">${esc(t.n1)}</div></div>
+  </div>`}
+// premiazioni: in alto le categorie da premiare, una linea, sotto quelle gia' premiate
+// medagliere delle associazioni: disponibile quando tutte le categorie sono concluse
+function MED(){const cs=D.cats.filter(c=>bk(c).ms.length),pend=cs.filter(c=>!pod(c)),T={};
+ if(!cs.length||pend.length)return{ok:false,cs,pend};
+ cs.forEach(c=>pod(c).forEach(x=>{const k=({'1°':0,'2°':1,'3°':2})[x[0]];if(k==null)return;const s=((c.soc||[])[x[1]]||'').trim()||'(senza associazione)',t=T[s]=T[s]||{n:s,m:[0,0,0],d:[]};t.m[k]++;t.d.push(x[0]+' '+c.nome+': '+c.atleti[x[1]])}));
+ const rows=Object.values(T).sort((a,b)=>(a.n[0]=='('?1:0)-(b.n[0]=='('?1:0)||b.m[0]-a.m[0]||b.m[1]-a.m[1]||b.m[2]-a.m[2]||a.n.localeCompare(b.n));
+ let p=0;rows.forEach((r,i)=>{const q=rows[i-1];r.p=i&&q.m.join()==r.m.join()&&(q.n[0]=='(')==(r.n[0]=='(')?p:(p=i+1)});
+ return{ok:true,rows,cs}}
+function MD(){const M=MED();let h='<div class="row"><button data-a="bk">Indietro</button><b class="g">Medagliere associazioni</b>'+(M.ok&&M.rows.length?'<button data-a="mdc">Copia testo</button>':'')+'</div>';
+ if(!M.cs.length)return h+'<p class="mu">Nessuna categoria con incontri.</p>';
+ if(!M.ok)return h+`<p class="mu">Il medagliere compare quando tutti gli incontri di tutte le categorie sono finiti. Mancano: ${M.pend.map(c=>esc(c.nome)).join(', ')}.</p>`;
+ if(!M.rows.length)return h+'<p class="mu">Nessuna medaglia assegnata. Controlla di aver indicato l\'associazione degli atleti (terzo campo nella scheda Atleti).</p>';
+ return h+'<table><tr><th>Pos.</th><th>Associazione</th><th>🥇</th><th>🥈</th><th>🥉</th><th>Tot.</th></tr>'+M.rows.map(r=>`<tr><td>${r.p}</td><td>${esc(r.n)}</td><td>${r.m[0]}</td><td>${r.m[1]}</td><td>${r.m[2]}</td><td>${r.m[0]+r.m[1]+r.m[2]}</td></tr>`).join('')+'</table>'
+  +'<p class="mu">Ordine: più ori, poi argenti, poi bronzi. A pari medaglie, stessa posizione.</p>'+M.rows.map(r=>`<details><summary>${esc(r.n)}</summary><small class="mu">${r.d.map(esc).join('<br>')}</small></details>`).join('')}
+function PZ(){const nm=(c,i)=>esc(c.atleti[i]),rd=D.cats.filter(c=>!c.pr&&pod(c)),dn=D.cats.filter(c=>c.pr),
+ card=(c,ok)=>{const p=pod(c)||bk(c).rk.slice(0,4);return`<div class="card"><div class="row"><div class="g"><b>${esc(c.nome)}</b> <small>tatami ${esc(c.tatami)}</small><br><small>${p.map(x=>x[0]+' '+nm(c,x[1])).join(' · ')}</small></div><button ${ok?'class="p"':''} data-a="pr" data-c="${c.id}">${ok?'Premiazione fatta':'Riporta da premiare'}</button><button data-a="op" data-id="${c.id}">Apri</button><button data-a="del" data-id="${c.id}">Elimina</button></div></div>`};
+ return`<div class="row"><button data-a="bk">Indietro</button><b class="g">Premiazioni</b></div><h3>Da premiare (${rd.length})</h3>`+(rd.map(c=>card(c,1)).join('')||'<p class="mu">Nessuna categoria pronta: compaiono qui a gara finita.</p>')+`<hr style="border:0;border-top:1px solid var(--bd);margin:16px 0"><div class="row"><h3 class="g">Premiate (${dn.length})</h3>${dn.length?'<button data-a="delpr">Elimina tutte le premiate</button>':''}</div>`+(dn.map(c=>card(c,0)).join('')||'<p class="mu">Nessuna premiazione ancora fatta.</p>')}
+function R(){const c=cur&&cat();$('#app').innerHTML=c?V(c):md?MD():pz?PZ():ly?LY():tt?T():H();document.body.classList.toggle('wide',!!c&&tab=='g');applyLy()}
+setInterval(()=>{const a=document.activeElement;if(tt&&!cur&&!(a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)))R()},5000);
+const A={
+ nc(){const nome=(prompt('Nome categoria (es. Maschi Seniores -66 kg, cinture blu-marroni-nere)')||'').trim();if(!nome)return;const t=prompt('Numero tatami','1')||'1',f='ijf';
+  const c={id:'c'+Date.now().toString(36),nome,fmt:f,tatami:t,atleti:[],matches:[],res:{}};D.cats.push(c);save(1);cur=c.id;tab='a';R()},
+ op(d){cur=d.id;tab='m';open=null;ly=null;R()},bk(){if(cur)cur=null;else{tt=null;ly=null;pz=null;md=null}R()},tm(){cur=null;tt=1;ly=null;pz=null;md=null;R()},ly(){cur=null;tt=null;ly=1;pz=null;md=null;R()},pzv(){cur=null;tt=null;ly=null;pz=1;md=null;R()},mdv(){cur=null;tt=null;ly=null;pz=null;md=1;R()},
+ mdc(){const M=MED();if(!M.ok)return;const t='Medagliere associazioni\n'+M.rows.map(r=>r.p+'. '+r.n+' - oro '+r.m[0]+', argento '+r.m[1]+', bronzo '+r.m[2]).join('\n');(navigator.clipboard?navigator.clipboard.writeText(t).then(()=>alert('Medagliere copiato.')):Promise.reject()).catch(()=>prompt('Copia il testo:',t))},
+ setly(d){D.layout=d.k;lastPub.elenco=null;if(d.k=='custom'){D.c0=D.c0||'#f4f4f4';D.t0=D.t0||'#111111';D.c1=D.c1||'#0a3fa0';D.t1=D.t1||'#ffffff';D.n0=D.n0||'Atleta 1';D.n1=D.n1||'Atleta 2'}save();R()},
+ tb(d){tab=d.k;open=null;R()},
+ del(d){const c=D.cats.find(x=>x.id==d.id);if(!c||!confirm('Eliminare la categoria "'+c.nome+'"? Tutti i risultati verranno cancellati e le sue medaglie escono dal medagliere.'))return;const i=D.cats.findIndex(x=>x.id==d.id);if(i>=0)D.cats.splice(i,1);if(cur==d.id)cur=null;if(window.SY&&window.SY.del)window.SY.del(d.id);save();R()},
+ win(d){const c=d.c?D.cats.find(x=>x.id==d.c):cat(),m=gm(c,d.i),k=+d.k;m.w=m.w===k?null:k;m.ts=m.w==null?null:Date.now();if(m.w==null)m.st=null;save(c);R()},
+ go(d){const c=D.cats.find(x=>x.id==d.c),m=gm(c,d.i);m.st=m.st?null:Date.now();if(m.st)m.rm=false;save(c);R()},
+ delpr(){const dn=D.cats.filter(c=>c.pr);if(!dn.length||!confirm('Eliminare tutte le '+dn.length+' categorie premiate? Tutti i loro risultati verranno cancellati e le medaglie escono dal medagliere (copialo prima).'))return;dn.forEach(c=>{if(window.SY&&window.SY.del)window.SY.del(c.id)});D.cats=D.cats.filter(c=>!c.pr);save();R()},
+ fzd(){D.fz=!D.fz;save();R()},
+ fzt(d){D.fzt=D.fzt||{};D.fzt[d.t]=!D.fzt[d.t];save();R()},
+ fzc(){const c=cat();c.fz=!c.fz;save();R()},
+ fgo(d){if(!fzOk(D.cats.find(x=>x.id==d.c)))return;if(!confirm('Gli atleti sono ancora in riposo. Forzare l\'incontro e mandarlo in gara?'))return;const c=D.cats.find(x=>x.id==d.c),m=gm(c,d.i);m.st=Date.now();m.rm=false;save(c);R()},
+ rm(d){const c=D.cats.find(x=>x.id==d.c),m=gm(c,d.i);m.rm=!m.rm;if(m.rm)m.st=null;save(c);R()},
+ pr(d){const c=D.cats.find(x=>x.id==d.c);c.pr=!c.pr;save(c);R()},
+ pt(){const v=String(prompt('Punti per ippon, waza-ari, yuko, koka (es. 10,7,5,1)',PT().join(','))||'').split(/[ ,;]+/).map(Number);if(v.length==4&&v.every(x=>x>=0)){D.pt=v;save()}R()},
+ ev(){const v=prompt('Codice evento (4-20 lettere/numeri).\n\n• Inserisci lo stesso codice nei tabelloni per collegarli.\n• Lascia vuoto per generarne uno nuovo automatico.\n\nOgni codice crea una "stanza" separata per la competizione.',EV);if(v===null)return;let c=v.toUpperCase().replace(/[^A-Z0-9_-]/g,'');if(!c)c='EV'+Math.random().toString(36).slice(2,6).toUpperCase();if(c.length<4)return alert('Il codice deve avere almeno 4 caratteri');try{localStorage.setItem('jev',c)}catch(e){}location.reload()},
+ rt(){const v=parseFloat(String(prompt('Riposo minimo tra due incontri dello stesso atleta (minuti)',D.rest||2)||'').replace(',','.'));if(v>=0){D.rest=v;save()}R()},
+ dt(d){open=open==d.i?null:d.i;R()},
+ sa(){const c=cat(),l=$('#at').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  if(c.fmt=='g'){if(l.length<2||l.length>5)return alert('Il girone richiede da 2 a 5 atleti')}else if(c.fmt=='dr'){if(l.length<4||l.length>32)return alert('Servono da 4 a 32 atleti')}else if(l.length<4)return alert('Servono almeno 4 atleti');
+  if(done(c)&&!confirm('Gli incontri già giocati verranno cancellati. Continuare?'))return;
+  c.atleti=l.map(x=>x.split(';')[0].trim());const pp=x=>x.split(';').map(s=>s.trim()),isN=s=>/^\d+$/.test(s);c.rk=l.map(x=>{const p=pp(x)[1]||'';return isN(p)&&+p>0?+p:null});c.soc=l.map(x=>{const p=pp(x);return p.length>2?p.slice(2).join(' ; '):(p[1]&&!isN(p[1])?p[1]:'')});gen(c);if(c.fmt=='g'){c.slots=null;c.seeds=[];c.pairs=rr(l.length).flat()}else if(c.fmt=='dr')drd(c);else draw(c);save();tab=c.fmt=='g'?'m':'a';R()},
+ dr(){const c=cat();if(done(c)&&!confirm('Rifacendo il sorteggio i risultati verranno cancellati. Continuare?'))return;c.res={};c.wd=[];c.fmt=='dr'?drd(c):draw(c);save();R()},
+ sx(){const c=cat();c.sx=!c.sx;save();R()},
+ wd(d){const c=cat(),k=+d.k,w=c.wd=c.wd||[],i=w.indexOf(k);i>=0?w.splice(i,1):w.push(k);save();R()},
+ ex(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(D)],{type:'application/json'}));a.download='gare.json';a.click()},
+ im(){$('#fi').click()}};
+document.onclick=e=>{const t=e.target.closest('[data-a]');if(t&&A[t.dataset.a])A[t.dataset.a](t.dataset)};
+function chFmt(c,v){const n=c.atleti.length,min={g:2}[v]||4,max={g:5,dr:32}[v]||999;
+ if(n&&(n<min||n>max)){alert(({g:"Il girone all'italiana richiede da 2 a 5 atleti",dr:'Il doppio recupero richiede da 4 a 32 atleti'})[v]||'Servono almeno 4 atleti');return R()}
+ if(done(c)&&!confirm('Cambiando formato i risultati già inseriti verranno cancellati. Continuare?'))return R();
+ c.fmt=v;gen(c);if(n){if(v=='g'){c.slots=null;c.seeds=[];c.pairs=rr(n).flat()}else if(v=='dr')drd(c);else draw(c)}else{c.slots=null;c.seeds=[]}save();R()}
+document.onchange=e=>{const t=e.target,f=t.dataset&&t.dataset.f;if(!f)return;if(ly&&['c0','t0','c1','t1','n0','n1'].includes(f)){D[f]=t.value;save();applyLy();return R()}const c=cat();if(!c)return;if(f=='fmt')return chFmt(c,t.value);if(t.dataset.i!=null)gm(c,t.dataset.i)[f]=t.value;else c[f]=t.value;save()};
+$('#fi').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(x=>{try{const j=JSON.parse(x);if(!Array.isArray(j.cats))throw 0;D=j;D.cats.forEach(fix);save(1);cur=null;R()}catch(err){alert('File non valido')}})};
+R();
+if(!EV)setTimeout(()=>A.ev(),300);
+</script><script type="module" onerror="document.getElementById('st').textContent='Errore: Firebase non caricato'">
+const U="https://www.gstatic.com/firebasejs/10.12.2/",sts=t=>{const e=document.getElementById("st");if(e)e.textContent=t};let FB,n=0;if(EV)sts("Connessione…");
+for(;;){try{FB=await Promise.all([import(U+"firebase-app.js"),import(U+"firebase-auth.js"),import(U+"firebase-firestore.js")]);break}catch(e){sts("⚠ Offline: libreria Firebase non raggiunta, riprovo… (i dati restano salvati sul dispositivo)");await Promise.race([new Promise(r=>setTimeout(r,Math.min(15000,2000*++n))),new Promise(r=>addEventListener("online",r,{once:true}))])}}
+const{initializeApp}=FB[0],{getAuth,signInAnonymously}=FB[1],{initializeFirestore,persistentLocalCache,doc,setDoc,deleteDoc,collection,onSnapshot}=FB[2];
+const app=initializeApp({apiKey:"AIzaSyDArN1Jq6w8vogT9iGDLGQg2Sl6iwGaUHs",authDomain:"draw-684d9.firebaseapp.com",projectId:"draw-684d9",storageBucket:"draw-684d9.firebasestorage.app",messagingSenderId:"918194057651",appId:"1:918194057651:web:5ee4cbf91658ecfaaa1bc6"});
+const st=t=>$('#st').textContent=t;if(!EV)st('Imposta il codice evento');
+if(EV){st('Connessione…');
+signInAnonymously(getAuth(app)).catch(()=>{});
+const db=initializeFirestore(app,{localCache:persistentLocalCache(),experimentalAutoDetectLongPolling:true}),col=collection(db,'ev',EV,'cats');
+const push=c=>setDoc(doc(db,'ev',EV,'cats',c.id),JSON.parse(JSON.stringify(c))).catch(e=>st('Errore: '+(e.code||e.message)));
+let first=true;
+onSnapshot(col,{includeMetadataChanges:true},snap=>{
+  snap.docChanges().forEach(ch=>{if(ch.doc.metadata.hasPendingWrites)return;const c=fix(ch.doc.data()),i=D.cats.findIndex(x=>x.id==c.id);
+    if(ch.type=='removed'){if(i>=0)D.cats.splice(i,1)}else if(i>=0)D.cats[i]=c;else D.cats.push(c)});
+  if(first&&!snap.metadata.fromCache){first=false;const ids=new Set(snap.docs.map(d=>d.id));D.cats.filter(c=>!ids.has(c.id)).forEach(push)}
+  try{localStorage.setItem(SK,JSON.stringify(D))}catch(e){}
+  const a=document.activeElement;if(!a||!/INPUT|TEXTAREA|SELECT/.test(a.tagName))R();
+  st((snap.metadata.fromCache?'Offline, in coda':'Sincronizzato')+' · '+EV)
+},e=>st('Errore: '+(e.code||e.message)));
+onSnapshot(collection(db,'ev',EV,'risultati'),snap=>snap.docChanges().forEach(ch=>{if(ch.type=='removed'||ch.doc.metadata.hasPendingWrites)return;if(applyRes(ch.doc.data()))deleteDoc(ch.doc.ref).catch(()=>{})}),()=>{});
+window.SY={push,pubDoc:(id,o)=>setDoc(doc(db,'ev',EV,'tatami',id),o).catch(e=>st('Errore: '+(e.code||e.message))),del:id=>deleteDoc(doc(db,'ev',EV,'cats',id)).catch(e=>st('Errore: '+(e.code||e.message)))};
+}
+</script>
+<script>if('serviceWorker'in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))</script></body></html>
