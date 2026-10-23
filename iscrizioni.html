@@ -1,0 +1,193 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#15171c"><title>Iscrizioni atleti - Yanagi Academy</title>
+<style>
+:root{--bg:#15171c;--c:#22252d;--bd:#3a3e49;--tx:#f2f2f2;--mu:#9aa0ad;--ok:#00e060;--bl:#2f6fe0;--er:#ff8a8a}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0 auto;max-width:620px;padding:10px 10px 60px;background:var(--bg);color:var(--tx);font:16px system-ui,sans-serif}
+h1{font-size:20px;margin:4px 0 4px}h3.mn{font-size:15px;margin:18px 0 8px}
+button,input,select{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 11px}
+button{cursor:pointer}button.p{background:var(--bl);border-color:var(--bl);font-weight:700}button.d{border-color:#b04545;color:#ff9a9a}button.big{width:100%;padding:13px;margin-top:12px;font-size:17px}
+.card{background:var(--c);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:8px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.g{flex:1;min-width:0}
+label{display:block;margin-top:10px;font-size:14px;color:var(--mu)}input,select{width:100%;margin-top:3px;color:var(--tx)}
+input.bad,select.bad{border-color:var(--er)}
+.er{display:block;color:var(--er);font-size:13px;margin-top:3px}.er:empty{display:none}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+small,.mu{color:var(--mu)}
+.bd{display:inline-block;padding:3px 9px;border-radius:99px;font-size:13px;font-weight:700;white-space:nowrap}
+.b-attesa{background:#c47a00;color:#fff}.b-iscritto{background:#0a7d2c;color:#fff}.b-non{background:#b04545;color:#fff}
+.sum .bd{margin-right:4px}
+.at .row.bt{margin-top:8px}
+#st{position:fixed;top:6px;right:8px;font-size:12px;color:var(--mu);background:var(--bg);padding:0 4px}
+</style></head><body>
+<div id="st"></div>
+<h1>Iscrizioni atleti</h1>
+<p id="gara" class="mu" style="margin:0 0 10px"></p>
+
+<form id="fa" class="card" novalidate hidden>
+ <b>Dati dell'associazione</b>
+ <label id="lev">Codice gara<input id="ev" autocomplete="off" autocapitalize="characters" maxlength="20"><small class="er" data-e="ev"></small></label>
+ <label>Nome dell'ASD<input id="asd" maxlength="80" autocomplete="organization"><small class="er" data-e="asd"></small></label>
+ <label>E-mail<input id="em" type="email" inputmode="email" maxlength="100" autocomplete="email"><small class="er" data-e="em"></small></label>
+ <small class="er" data-e="gen"></small>
+ <button class="p big" id="go" type="submit" disabled>Continua</button>
+ <p><small>Tutti i campi sono obbligatori. Con la stessa e-mail ritrovi l'elenco già inviato.</small></p>
+</form>
+
+<div id="mn" hidden>
+ <div class="card row"><div class="g" id="who"></div><button id="out" type="button">Cambia</button></div>
+
+ <form id="fm" class="card" novalidate>
+  <b id="ft">Nuovo atleta</b> <small>(tutti i campi sono obbligatori)</small>
+  <div class="g2">
+   <label>Nome<input id="f_nome" maxlength="40" autocomplete="off"><small class="er" data-e="nome"></small></label>
+   <label>Cognome<input id="f_cognome" maxlength="40" autocomplete="off"><small class="er" data-e="cognome"></small></label>
+  </div>
+  <label>Sesso<select id="f_sesso"><option value="">Scegli…</option><option value="M">Maschile</option><option value="F">Femminile</option></select><small class="er" data-e="sesso"></small></label>
+  <label>Nazionalità<select id="f_naz"></select><small class="er" data-e="naz"></small></label>
+  <label>Data di nascita<input id="f_nascita" type="date" min="1920-01-01"><small class="er" data-e="nascita"></small></label>
+  <label>Codice fiscale<input id="f_cf" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false"><small class="er" data-e="cf"></small></label>
+  <label>Grado<select id="f_grado"></select><small class="er" data-e="grado"></small></label>
+  <label>Peso (kg)<input id="f_peso" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="es. 66,5"><small class="er" data-e="peso"></small></label>
+  <label>Federazione / Ente di promozione / FISPIC<select id="f_ente"></select><small class="er" data-e="ente"></small></label>
+  <label id="l_altro" hidden>Nome dell'ente<input id="f_altro" maxlength="40" autocomplete="off"><small class="er" data-e="altro"></small></label>
+  <label>Id tesseramento<input id="f_tess" maxlength="30" autocomplete="off"><small class="er" data-e="tess"></small></label>
+  <div id="l_cat" hidden style="margin-top:10px"><span style="font-size:14px;color:var(--mu)">Categoria di gara (assegnata in automatico)</span><div id="v_cat" class="card" style="margin:3px 0 0;font-weight:700"></div><input type="hidden" id="f_cat"><small id="h_cat" class="mu" style="display:block;margin-top:3px"></small></div>
+  <div class="row" style="margin-top:12px"><button class="p g" id="sb" type="submit">Invia iscrizione</button><button type="button" id="cn" hidden>Annulla modifica</button></div>
+ </form>
+
+ <h3 class="mn">Atleti della tua associazione</h3>
+ <div id="sum" class="sum" style="margin-bottom:8px"></div>
+ <div id="ls"></div>
+</div>
+
+<script type="module">
+const $=s=>document.querySelector(s),esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),st=t=>$('#st').textContent=t;
+// ---- elenchi modificabili ----
+const ENTI=['FIJLKAM','FISPIC','CSEN','ASI','UISP','CSI','AICS','OPES','ACSI'],
+ SCALA=['6° kyu (Bianca)','5° kyu (Gialla)','4° kyu (Arancione)','3° kyu (Verde)','2° kyu (Blu)','1° kyu (Marrone)'].concat([1,2,3,4,5,6,7,8,9,10].map(n=>n+'° dan (Nera)'));
+const STATI=['in attesa','iscritto','non iscritto'],BADGE={'in attesa':['b-attesa','⏳ In attesa'],'iscritto':['b-iscritto','✔ Iscritto'],'non iscritto':['b-non','✖ Non iscritto']};
+// ---- codice fiscale: formato, carattere di controllo, data di nascita ----
+const OD=[1,0,5,7,9,13,15,17,19,21,2,4,18,20,11,3,6,8,12,14,16,10,22,25,24,23],OM='LMNPQRSTUV';
+function cfCheck(c){c=String(c||'').toUpperCase().replace(/\s/g,'');
+ if(!/^[A-Z]{6}[0-9LMNPQRSTUV]{2}[ABCDEHLMPRST][0-9LMNPQRSTUV]{2}[A-Z][0-9LMNPQRSTUV]{3}[A-Z]$/.test(c))return{ok:false,why:'formato'};
+ let s=0;for(let i=0;i<15;i++){const ch=c[i],v=/\d/.test(ch)?+ch:ch.charCodeAt(0)-65;s+=i%2==0?OD[v]:v}
+ if(String.fromCharCode(65+s%26)!==c[15])return{ok:false,why:'controllo'};
+ const dg=x=>{const k=OM.indexOf(x);return k>=0?k:+x},yy=+(''+dg(c[6])+dg(c[7])),mm='ABCDEHLMPRST'.indexOf(c[8])+1;let dd=+(''+dg(c[9])+dg(c[10]));if(dd>40)dd-=40;
+ return{ok:true,yy,mm,dd}}
+// ---- identificativo dell'associazione ricavato dalla mail ----
+const h53=(s,seed)=>{let a=0xdeadbeef^seed,b=0x41c6ce57^seed;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677)}a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);return 4294967296*(2097151&b)+(a>>>0)},
+ aidOf=e=>'a'+h53(e,1).toString(36)+h53(e,2).toString(36),norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),
+ fmtD=d=>{const p=String(d||'').split('-');return p.length==3?p[2]+'/'+p[1]+'/'+p[0]:d};
+const today=(()=>{const t=new Date(),p=n=>String(n).padStart(2,'0');return t.getFullYear()+'-'+p(t.getMonth()+1)+'-'+p(t.getDate())})();
+$('#f_grado').innerHTML='<option value="">Scegli…</option>'+SCALA.map(g=>`<option>${esc(g)}</option>`).join('');
+const CODN='ad ae af ag ai al am ao aq ar as at au aw ax az ba bb bd be bf bg bh bi bj bl bm bn bo bq br bs bt bv bw by bz ca cc cd cf cg ch ci ck cl cm cn co cr cu cv cw cx cy cz de dj dk dm do dz ec ee eg eh er es et fi fj fk fm fo fr ga gb gd ge gf gg gh gi gl gm gn gp gq gr gs gt gu gw gy hk hm hn hr ht hu id ie il im in io iq ir is it je jm jo jp ke kg kh ki km kn kp kr kw ky kz la lb lc li lk lr ls lt lu lv ly ma mc md me mf mg mh mk ml mm mn mo mp mq mr ms mt mu mv mw mx my mz na nc ne nf ng ni nl no np nr nu nz om pa pe pf pg ph pk pl pm pn pr ps pt pw py qa re ro rs ru rw sa sb sc sd se sg sh si sj sk sl sm sn so sr ss st sv sx sy sz tc td tf tg th tj tk tl tm tn to tr tt tv tw tz ua ug um us uy uz va vc ve vg vi vn vu wf ws xk ye yt za zm zw'.split(' ').map(c=>c.toUpperCase()),
+ nazN=c=>{try{return new Intl.DisplayNames(['it'],{type:'region'}).of(String(c).toUpperCase())}catch(e){return String(c).toUpperCase()}};
+$('#f_naz').innerHTML='<option value="">Scegli…</option><option value="IT">Italia</option><option disabled>──────────</option>'+CODN.filter(c=>c!='IT').map(c=>[c,nazN(c)]).sort((a,b)=>a[1].localeCompare(b[1],'it')).map(([c,n])=>`<option value="${c}">${esc(n)}</option>`).join('');
+$('#f_ente').innerHTML='<option value="">Scegli…</option>'+ENTI.concat(['Altro']).map(e=>`<option>${esc(e)}</option>`).join('');
+$('#f_nascita').max=today;
+
+// ---- collegamento a Firebase (o al server locale) ----
+const U='https://www.gstatic.com/firebasejs/10.12.2/';
+st('Connessione…');
+const LOC=await fetch('/api/ping',{cache:'no-store',signal:AbortSignal.timeout?AbortSignal.timeout(2500):undefined}).then(r=>r.ok?r.json():null).catch(()=>null).then(j=>j&&j.ok?j:null),
+ LL=LOC?await import('./locale.js'):null;
+let FB,n=0;for(;;){try{FB=LL?[LL,LL,LL]:await Promise.all([import(U+'firebase-app.js'),import(U+'firebase-auth.js'),import(U+'firebase-firestore.js')]);break}catch(e){st('⚠ Offline: libreria Firebase non raggiunta, riprovo…');await new Promise(r=>setTimeout(r,Math.min(15000,2000*++n)))}}
+const{initializeApp}=FB[0],{getAuth,signInAnonymously}=FB[1],{initializeFirestore,persistentLocalCache,doc,setDoc,onSnapshot}=FB[2];
+const app=initializeApp({apiKey:"AIzaSyDArN1Jq6w8vogT9iGDLGQg2Sl6iwGaUHs",authDomain:"draw-684d9.firebaseapp.com",projectId:"draw-684d9",storageBucket:"draw-684d9.firebasestorage.app",messagingSenderId:"918194057651",appId:"1:918194057651:web:5ee4cbf91658ecfaaa1bc6"}),
+ db=initializeFirestore(app,{localCache:persistentLocalCache(),experimentalAutoDetectLongPolling:true});
+try{await Promise.race([signInAnonymously(getAuth(app)),new Promise(r=>setTimeout(r,6000))])}catch(e){}
+st('');
+
+// ---- stato ----
+const q=new URLSearchParams(location.search).get('ev'),clean=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9_-]/g,'');
+if(q)try{localStorage.setItem('isc_ev',clean(q));history.replaceState(null,'',location.pathname)}catch(e){}
+let EV=clean(q||(()=>{try{return localStorage.getItem('isc_ev')}catch(e){return''}})()),S=null,cur=null,unsub=null,edit=null,meta={},CATS=[],ANNO=new Date().getFullYear(),unsubC=null;
+const ref=()=>doc(db,'ev',EV,'iscrizioni',S.aid),sess=()=>{try{return JSON.parse(localStorage.getItem('isc_s_'+EV)||'null')}catch(e){return null}};
+
+function showLogin(msg){if(unsub){unsub();unsub=null}if(unsubC){unsubC();unsubC=null}CATS=[];buildCat();S=null;cur=null;edit=null;$('#mn').hidden=true;$('#fa').hidden=false;
+ $('#gara').textContent=EV?'Gara: '+EV:'';$('#lev').hidden=!!EV;const s=EV&&sess();$('#asd').value=s?s.asd:'';$('#em').value=s?s.email:'';$('#ev').value=EV;
+ $('[data-e=gen]').textContent=msg||'';$('#go').disabled=false}
+function errs(er){const fid=k=>$('#f_'+k)||$('#'+k);document.querySelectorAll('[data-e]').forEach(e=>{const k=e.dataset.e,i=fid(k);e.textContent=er[k]||'';if(i)i.classList.toggle('bad',!!er[k])});
+ const k=Object.keys(er)[0];if(k&&fid(k))fid(k).focus()}
+
+// ---- accesso dell'associazione ----
+$('#fa').onsubmit=e=>{e.preventDefault();const er={},ev=EV||clean($('#ev').value),asd=$('#asd').value.replace(/\s+/g,' ').trim(),em=$('#em').value.trim().toLowerCase();
+ if(ev.length<4||ev.length>20)er.ev='Inserisci il codice gara (da 4 a 20 caratteri)';
+ if(!asd)er.asd="Inserisci il nome dell'ASD";
+ if(!em)er.em="Inserisci l'e-mail";else if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em))er.em='E-mail non valida';
+ errs(er);if(Object.keys(er).length)return;
+ if(/^L-/.test(ev)&&!LOC){$('[data-e=gen]').textContent="Questa è una gara in rete locale: apri la pagina dall'indirizzo del server che ti ha dato l'organizzazione (http://…/iscrizioni.html).";return}
+ EV=ev;try{localStorage.setItem('isc_ev',EV)}catch(x){}
+ S={asd,email:em,aid:aidOf(em)};$('#go').disabled=true;st('Controllo…');
+ let decided=false;const decide=()=>{if(decided)return;decided=true;clearTimeout(tmo);st('');
+  if(cur&&cur.asd&&norm(cur.asd)!==norm(S.asd)){if(!confirm('Questa e-mail risulta già usata per «'+cur.asd+'».\n\nOK = sei la stessa associazione e continui con quell\'elenco.\nAnnulla = torni indietro e cambi e-mail.')){return showLogin()}S.asd=cur.asd}
+  try{localStorage.setItem('isc_s_'+EV,JSON.stringify({asd:S.asd,email:S.email}))}catch(x){}
+  $('#fa').hidden=true;$('#mn').hidden=false;$('#gara').textContent='Gara: '+EV;render();if(unsubC)unsubC();unsubC=onSnapshot(doc(db,'ev',EV,'iscrizioni','_categorie'),sn=>{const d=sn.exists()?sn.data():null;CATS=(d&&d.cats)||[];ANNO=(d&&d.anno)||new Date().getFullYear();buildCat();autoCat();render()},()=>{})};
+ const tmo=setTimeout(decide,4000);
+ if(unsub)unsub();
+ unsub=onSnapshot(ref(),{includeMetadataChanges:true},snap=>{cur=snap.exists()?snap.data():null;meta=snap.metadata||{};if(!decided){if(!meta.fromCache)decide()}else render()},er=>{clearTimeout(tmo);showLogin('Errore di collegamento: '+(er.code||er.message))})};
+$('#out').onclick=()=>{try{localStorage.removeItem('isc_s_'+EV)}catch(e){}showLogin()};
+
+// ---- elenco atleti con stato ----
+function render(){if(!S)return;const L=(cur&&cur.atleti)||[],E=(cur&&cur.esiti)||{},P=(cur&&cur.sp)||{},sx=t=>E[t.id]||'in attesa';
+ const sync=meta.hasPendingWrites?'⏳ invio in corso…':meta.fromCache?'offline: l\'invio parte appena torna la rete':'✔ sincronizzato con l\'organizzazione';
+ $('#who').innerHTML=`<b>${esc(S.asd)}</b><br><small>${esc(S.email)} · ${esc(sync)}</small>`;
+ $('#sum').innerHTML=L.length?STATI.map(s=>`<span class="bd ${BADGE[s][0]}">${BADGE[s][1]} ${L.filter(t=>sx(t)==s).length}</span>`).join(''):'';
+ $('#ls').innerHTML=L.length?L.slice().reverse().map(t=>{const s=sx(t),b=BADGE[s],eff=P[t.id]||(suggest(t)||{}).id||'',cn=(CATS.find(c=>c.id==eff)||{}).n||'';
+  return`<div class="card at"><div class="row"><b class="g">${esc(t.cognome.toUpperCase())} ${esc(t.nome)}</b><span class="bd ${b[0]}">${b[1]}</span></div>
+  ${t.cfx?'<div style="color:#ffb454;font-size:13px;margin-bottom:2px">⚠ Codice fiscale da verificare</div>':''}<small>Nato il ${esc(fmtD(t.nascita))} · CF ${esc(t.cf)} · ${esc(t.grado)} · ${esc(String(t.peso).replace('.',','))} kg · ${esc(t.ente)} · tessera ${esc(t.tess)}${t.sesso?' · '+(t.sesso=='F'?'F':'M'):''}${t.naz?' · '+esc(nazN(t.naz)):''}</small>
+  <div style="margin:4px 0;font-size:14px">Categoria: <b>${esc(cn||'da assegnare')}</b></div>
+  ${s=='in attesa'?`<div class="row bt"><button data-a="ed" data-id="${esc(t.id)}">Modifica</button><button class="d" data-a="rm" data-id="${esc(t.id)}">Elimina</button></div>`:`<div class="mu" style="margin-top:6px;font-size:13px">${s=='iscritto'?'Iscrizione confermata dal direttore di gara.':'Candidatura respinta dal direttore di gara. Per chiarimenti contatta l\'organizzazione.'}</div>`}</div>`}).join(''):'<p class="mu">Nessun atleta inviato. Compila il modulo qui sopra.</p>'}
+
+// ---- salvataggio ----
+function persist(list){const o={aid:S.aid,asd:cur&&cur.asd||S.asd,email:S.email,atleti:list,u:Date.now()};if(!(cur&&cur.c))o.c=Date.now();
+ cur={...(cur||{}),...o};render();setDoc(ref(),o,{merge:true}).catch(e=>st('Errore: '+(e.code||e.message)))}
+const read=()=>({nome:$('#f_nome').value.replace(/\s+/g,' ').trim(),cognome:$('#f_cognome').value.replace(/\s+/g,' ').trim(),nascita:$('#f_nascita').value,cf:$('#f_cf').value.toUpperCase().replace(/\s/g,''),grado:$('#f_grado').value.replace(/\s+/g,' ').trim(),peso:$('#f_peso').value.trim(),ente:$('#f_ente').value,altro:$('#f_altro').value.replace(/\s+/g,' ').trim(),tess:$('#f_tess').value.trim(),sesso:$('#f_sesso').value,naz:$('#f_naz').value,cat:$('#f_cat').value});
+function check(v){const er={};
+ if(!v.nome)er.nome='Inserisci il nome';if(!v.cognome)er.cognome='Inserisci il cognome';
+ if(!v.nascita)er.nascita='Inserisci la data di nascita';else if(v.nascita>today||v.nascita<'1920-01-01')er.nascita='Data di nascita non valida';
+ if(!v.cf)er.cf='Inserisci il codice fiscale';
+ else if(!/^[A-Z0-9]{5,20}$/.test(v.cf))er.cf='Il codice fiscale può contenere solo lettere e numeri (da 5 a 20 caratteri)';
+ else if(((cur&&cur.atleti)||[]).some(t=>t.cf==v.cf&&t.id!=edit))er.cf='Atleta già presente nell\'elenco (stesso codice fiscale)';
+ if(!v.sesso)er.sesso='Indica il sesso';if(!v.naz||!CODN.includes(v.naz))er.naz='Scegli la nazionalità';if(!v.grado||gIdx(v.grado)<0)er.grado='Scegli il grado';
+ if(!v.peso)er.peso='Inserisci il peso';else{const p=parseFloat(v.peso.replace(',','.'));if(!/^\d{1,3}([.,]\d{1,2})?$/.test(v.peso)||!(p>=10&&p<=250))er.peso='Peso non valido (da 10 a 250 kg)'}
+ if(!v.ente)er.ente='Scegli la federazione o l\'ente';else if(v.ente=='Altro'&&!v.altro)er.altro='Scrivi il nome dell\'ente';
+ if(!v.tess)er.tess='Inserisci l\'id di tesseramento';return er}
+function cfDubbio(v){const c=cfCheck(v.cf);if(!c.ok)return true;if(!v.nascita)return false;const[y,m,d]=v.nascita.split('-').map(Number);return c.yy!=y%100||c.mm!=m||c.dd!=d}
+// ---- categoria scelta in automatico da età, sesso, peso e grado ----
+function gIdx(g){g=String(g||'').toLowerCase().trim();let i=SCALA.findIndex(x=>x.toLowerCase()==g);if(i>=0)return i;const m=g.match(/(\d+)\s*°?\s*(kyu|dan)/);
+ if(m){const n=+m[1];return m[2]=='kyu'?(n>=1&&n<=6?6-n:-1):(n>=1&&n<=10?5+n:-1)}
+ const col={bianca:0,gialla:1,arancio:2,arancione:2,verde:3,blu:4,marrone:5,nera:6,nero:6};for(const k in col)if(g.includes(k))return col[k];return -1}
+function suggest(v){const w=parseFloat(String(v.peso||'').replace(',','.')),gi=gIdx(v.grado);if(!CATS.length||!v.nascita||!v.sesso||!(w>0)||gi<0)return null;
+ const age=ANNO-(+v.nascita.slice(0,4)),grp={};
+ CATS.filter(c=>age>=c.ea&&age<=c.eb&&(c.s=='X'||c.s==v.sesso)&&gi>=c.gd&&gi<=c.ga).forEach(c=>{const k=[c.cl,c.s,c.gd,c.ga].join('|');(grp[k]=grp[k]||[]).push(c)});
+ const picks=Object.values(grp).map(list=>{const lim=list.filter(c=>c.p&&c.p[0]=='-').map(c=>({c,l:parseFloat(c.p.slice(1))})).sort((a,b)=>a.l-b.l),f=lim.find(x=>w<=x.l);if(f)return f.c;
+  const pl=list.find(c=>c.p&&c.p[0]=='+');if(pl&&w>parseFloat(pl.p.slice(1)))return pl;return list.find(c=>!c.p)||null}).filter(Boolean);
+ picks.sort((a,b)=>(a.s=='X')-(b.s=='X')||(a.ga-a.gd)-(b.ga-b.gd));return picks[0]||null}
+function buildCat(){$('#l_cat').hidden=!CATS.length}
+function autoCat(){if(!CATS.length)return;const v=read(),c=suggest(v),h=$('#h_cat'),all=v.nascita&&v.sesso&&v.peso&&v.grado;
+ $('#f_cat').value=c?c.id:'';$('#v_cat').textContent=c?c.n:'—';h.style.color=c||!all?'':'#ffb454';
+ h.textContent=c?'Calcolata in base a età, sesso, peso e grado: non si può modificare.':all?"Nessuna categoria corrisponde ai dati inseriti: puoi inviare l'iscrizione, la categoria sarà assegnata dall'organizzazione.":'Compila data di nascita, sesso, peso e grado: la categoria viene assegnata in automatico.'}
+['input','change'].forEach(ev=>$('#fm').addEventListener(ev,e=>{if(['f_nascita','f_sesso','f_peso','f_grado'].includes(e.target.id))autoCat()}));
+function clearForm(keepEnte){const e=$('#f_ente').value,a=$('#f_altro').value,nz=$('#f_naz').value;$('#fm').reset();if(keepEnte){$('#f_ente').value=e;$('#f_altro').value=a;$('#f_naz').value=nz}$('#l_altro').hidden=$('#f_ente').value!='Altro';edit=null;$('#ft').textContent='Nuovo atleta';$('#sb').textContent='Invia iscrizione';$('#cn').hidden=true;errs({});autoCat()}
+$('#f_ente').onchange=()=>{$('#l_altro').hidden=$('#f_ente').value!='Altro'};
+$('#f_cf').oninput=e=>{e.target.value=e.target.value.toUpperCase()};
+$('#fm').oninput=e=>{e.target.classList.remove('bad');const s=document.querySelector('[data-e="'+e.target.id.slice(2)+'"]');if(s)s.textContent=''};
+$('#fm').onsubmit=e=>{e.preventDefault();const v=read(),er=check(v);errs(er);if(Object.keys(er).length)return;
+ const E=(cur&&cur.esiti)||{},list=((cur&&cur.atleti)||[]).slice(),t={id:edit||'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),nome:v.nome,cognome:v.cognome,nascita:v.nascita,cf:v.cf,grado:v.grado,peso:parseFloat(v.peso.replace(',','.')),ente:v.ente=='Altro'?v.altro:v.ente,tess:v.tess,cfx:cfDubbio(v),sesso:v.sesso,naz:v.naz,ts:Date.now()};
+ if(edit){const i=list.findIndex(x=>x.id==edit);if(i<0||(E[edit]&&E[edit]!='in attesa')){alert('Questo atleta è già stato valutato dal direttore di gara: non si può più modificare.');return clearForm(1)}t.ts=list[i].ts;list[i]=t}else list.push(t);
+ persist(list);clearForm(1)};
+$('#cn').onclick=()=>clearForm(1);
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b||!S)return;const L=(cur&&cur.atleti)||[],E=(cur&&cur.esiti)||{},t=L.find(x=>x.id==b.dataset.id);if(!t)return;
+ if(E[t.id]&&E[t.id]!='in attesa'){alert('Questo atleta è già stato valutato dal direttore di gara.');return}
+ if(b.dataset.a=='rm'){if(confirm('Eliminare '+t.cognome+' '+t.nome+' dall\'elenco?'))persist(L.filter(x=>x.id!=t.id))}
+ else if(b.dataset.a=='ed'){edit=t.id;$('#f_nome').value=t.nome;$('#f_cognome').value=t.cognome;$('#f_nascita').value=t.nascita;$('#f_cf').value=t.cf;$('#f_grado').value=SCALA[gIdx(t.grado)]||'';$('#f_sesso').value=t.sesso||'';$('#f_naz').value=t.naz||'';$('#f_peso').value=String(t.peso).replace('.',',');
+  const known=ENTI.includes(t.ente);$('#f_ente').value=known?t.ente:'Altro';$('#f_altro').value=known?'':t.ente;$('#l_altro').hidden=known;$('#f_tess').value=t.tess;autoCat();
+  $('#ft').textContent='Modifica atleta';$('#sb').textContent='Salva modifiche';$('#cn').hidden=false;$('#fm').scrollIntoView({behavior:'smooth'})}});
+
+buildCat();
+// ---- avvio ----
+if(EV&&/^L-/.test(EV)&&!LOC){showLogin("Gara in rete locale: apri la pagina dall'indirizzo del server che ti ha dato l'organizzazione (http://…/iscrizioni.html).")}
+else{showLogin();const s=EV&&sess();if(s){$('#fa').requestSubmit?$('#fa').requestSubmit():$('#fa').dispatchEvent(new Event('submit',{cancelable:true}))}}
+</script>
+<script>if('serviceWorker'in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))</script>
+</body></html>
