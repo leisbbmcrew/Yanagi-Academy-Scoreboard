@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Yanagi Academy - Gestore gare</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#15171c">
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#15171c;color:#f2f2f2;font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;flex-direction:column;align-items:center;padding:24px 16px calc(24px + env(safe-area-inset-bottom))}
+h1{margin:8px 0 4px;font-size:24px}.sub{color:#9aa0ad;font-size:13px;margin-bottom:20px;text-align:center}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;width:100%;max-width:760px}
+a.t{display:block;background:#22252d;border:1px solid #3a3e49;border-radius:14px;padding:16px 18px;color:inherit;text-decoration:none}
+a.t:active,a.t:hover{background:#2c303a;border-color:#2f6fe0}
+a.t b{display:block;font-size:18px}a.t span{color:#9aa0ad;font-size:13px}
+label.sel{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;color:#c8ccd6;font-size:14px;max-width:760px}
+select{font:inherit;color:inherit;background:#22252d;border:1px solid #3a3e49;border-radius:8px;padding:8px 10px}
+</style></head><body>
+<h1>🥋 Yanagi Academy</h1>
+<div class="sub">Gestore gare · scegli cosa aprire</div>
+<div class="g">
+<a class="t" href="tabellone.html"><b>🥋 Tabellone</b><span>Segnapunti del tatami</span></a>
+<a class="t" href="gare.html"><b>🏆 Gare</b><span>Tavolo centrale dell’evento</span></a>
+<a class="t" href="pdg.html"><b>⚖ Presidenti di giuria</b><span>pdg: tabelloni del singolo tatami</span></a>
+<a class="t" href="pdg2.html"><b>🗒 pdg2</b><span>Tabelloni rapidi, solo in locale</span></a>
+<a class="t" href="premiazioni.html"><b>🥇 Premiazioni</b><span>Tavolo premiazioni</span></a>
+<a class="t" href="iscrizioni.html"><b>📝 Iscrizioni</b><span>Iscrizione atleti per le associazioni</span></a>
+</div>
+<label class="sel">Su questo dispositivo apri sempre:
+<select id="auto"><option value="">Mostra questo menu</option><option value="tabellone.html">🥋 Tabellone</option><option value="gare.html">🏆 Gare</option><option value="pdg.html">⚖ Presidenti di giuria</option><option value="pdg2.html">🗒 pdg2</option><option value="premiazioni.html">🥇 Premiazioni</option><option value="iscrizioni.html">📝 Iscrizioni</option></select></label>
+<div class="sub" style="margin-top:6px">Per tornare qui: tocca il pulsante 🏠 (nel tabellone: ☰ › Menu principale).</div>
+<script>
+(function(){
+ var q=new URLSearchParams(location.search),LS=window.localStorage,OK=['tabellone.html','gare.html','pdg.html','pdg2.html','premiazioni.html','iscrizioni.html'];
+ function g(k){try{return LS.getItem(k)}catch(e){return null}}
+ var v=g('idxauto');if(v==='1')v='tabellone.html'; // compatibilita' con la scelta precedente
+ if(OK.indexOf(v)<0)v='';
+ // vecchi collegamenti al tabellone (index.html?ev=...&t=...): inoltra in automatico
+ if(!q.has('menu')){
+  if(q.get('ev')||q.get('t'))return location.replace('tabellone.html'+location.search);
+  if(v)return location.replace(v);
+ }
+ var c=document.getElementById('auto');c.value=v;
+ c.onchange=function(){try{c.value?LS.setItem('idxauto',c.value):LS.removeItem('idxauto')}catch(e){}};
+ if('serviceWorker'in navigator&&/^https?:/.test(location.protocol))addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+})();
+</script><script>try{screen.orientation.unlock()}catch(e){}</script>
+</body></html>
