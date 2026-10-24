@@ -1,19 +1,10 @@
-# Tabellone Judo
+# Gestore gare Judo
 
-Tabellone segnapunti per il judo, pensato per essere usato da telefono o tablet in orizzontale e proiettato su una TV o un secondo schermo durante le gare.
+Il Gestore gare Judo è uno strumento completo studiato per semplificare gli eventi di judo in ogni loro aspetto. Creato da Yanagi Academy, all'interno troverete una serie di tools pensati per gli UDG.
 
 Creato da **Yanagi Academy**.
 
 🔗 **Sito pubblico:** https://leisbbmcrew.github.io/Yanagi-Academy-Scoreboard/
-
-## Funzionalità principali
-
-- **Tempo**: regolamentare a countdown e golden score, personalizzabili o a tempo libero ("no limit").
-- **Shido**: numero di penalità configurabile, con l'ultima penalità segnalata in rosso.
-- **Punteggi**: Ippon, Waza-ari, Yuko e Koka, attivabili singolarmente; assegnazione automatica durante l'osaekomi in base ai secondi configurati.
-- **Database atleti**: importazione da file (CSV/TXT), ricerca per nome, cognome o parte di essi, bandiera della nazione caricata in automatico.
-- **Pannello per la TV**: vista separata, pensata per essere proiettata, che mostra solo i dati confermati.
-- **Riepilogo match**: storico dei match disputati, esportabile in CSV.
 
 ## Come si usa
 
